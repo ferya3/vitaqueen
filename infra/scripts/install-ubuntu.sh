@@ -251,20 +251,47 @@ info "MySQL is the slowest package here; give it a minute."
 # --- Database ---------------------------------------------------------------
 
 step "Database"
-DB_PASSWORD="$(openssl rand -base64 24 | tr -d '/+=' | head -c 28)"
-if "${SUDO[@]}" mysql -N -e "SELECT 1 FROM mysql.user WHERE user='${DB_USER}'" | grep -q 1; then
-  info "User ${DB_USER} already exists; leaving its password alone."
-  DB_PASSWORD=""
+
+# The database account and apps/api/.env have to agree, and a run that dies in
+# between must not leave them disagreeing. So: take the password from an
+# existing .env if there is one, generate it otherwise, and then assert it on
+# the account either way. A previous run that created the user and then failed
+# before writing .env — which is exactly what a Composer error does — converges
+# on the next run instead of locking the app out of its own database.
+ENV_FILE="$INSTALL_DIR/apps/api/.env"
+DB_PASSWORD=""
+
+if [[ -f "$ENV_FILE" ]]; then
+  DB_PASSWORD="$(sed -n 's/^DB_PASSWORD=//p' "$ENV_FILE" | head -1 | tr -d '"'"'"'"')"
+fi
+
+if [[ -z "$DB_PASSWORD" ]]; then
+  # Hex only: nothing here can be mangled by the sed that writes it into .env,
+  # or by the quoting in the SQL below.
+  DB_PASSWORD="$(openssl rand -hex 24)"
+  info "Generated a database password for ${DB_USER}."
+
+  # An .env that exists but carries an empty DB_PASSWORD is the fingerprint of
+  # a half-finished earlier run. Leaving that file "untouched" out of politeness
+  # would mean writing a password onto the account that the application still
+  # does not know, so this one line is repaired.
+  if [[ -f "$ENV_FILE" ]]; then
+    sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=${DB_PASSWORD}|" "$ENV_FILE"
+    warn "apps/api/.env had no DB_PASSWORD; filled it in from the account created here."
+  fi
 else
-  # Grants are limited to this one schema. The application never connects as root.
-  "${SUDO[@]}" mysql <<SQL
+  info "Reusing the database password already in apps/api/.env."
+fi
+
+# Grants are limited to this one schema. The application never connects as root.
+"${SUDO[@]}" mysql <<SQL
 CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';
+CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';
+ALTER USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';
 GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, REFERENCES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';
 FLUSH PRIVILEGES;
 SQL
-  info "Created database ${DB_NAME} and user ${DB_USER}."
-fi
+info "Database ${DB_NAME} and user ${DB_USER} are ready."
 
 # --- Source -----------------------------------------------------------------
 
@@ -301,8 +328,14 @@ if [[ ! -f .env ]]; then
     .env
   "$PHP_BIN" artisan key:generate --ansi --quiet
 else
-  warn "apps/api/.env exists — left untouched. Check DB_PASSWORD and INTERNAL_API_TOKEN yourself."
-  INTERNAL_TOKEN="$(grep -E '^INTERNAL_API_TOKEN=' .env | cut -d= -f2- || true)"
+  info "apps/api/.env exists — left untouched; its DB_PASSWORD was applied to the database account above."
+  INTERNAL_TOKEN="$(sed -n 's/^INTERNAL_API_TOKEN=//p' .env | head -1)"
+
+  if [[ -z "$INTERNAL_TOKEN" ]]; then
+    INTERNAL_TOKEN="$(openssl rand -hex 32)"
+    sed -i "s|^INTERNAL_API_TOKEN=.*|INTERNAL_API_TOKEN=${INTERNAL_TOKEN}|" .env
+    warn "apps/api/.env had no INTERNAL_API_TOKEN; generated one."
+  fi
 fi
 
 "$PHP_BIN" artisan migrate --seed --force --ansi 2>&1 | tail -20
@@ -346,7 +379,5 @@ cat <<EOF
 
 EOF
 
-if [[ -n "$DB_PASSWORD" ]]; then
-  warn "Database password for ${DB_USER} was generated and written to apps/api/.env only."
-fi
+info "The database password for ${DB_USER} lives only in apps/api/.env."
 warn "The admin password was printed once by the seeder, above. Store it now — enrol 2FA at first login."
