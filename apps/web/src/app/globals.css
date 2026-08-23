@@ -1,0 +1,410 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   VitaQueen Design System
+   --------------------------------------------------------------------------
+   Layer 1 of the architecture: brand. Every colour, type step, radius and
+   easing curve used anywhere in the product is declared once, here.
+   Components consume tokens (`text-abyss-900`, `ease-water`), never raw hex.
+   ========================================================================== */
+
+@theme {
+  /* --- Colour: deep navy, the anchor of the palette ---------------------- */
+  --color-abyss-50: #eef3f8;
+  --color-abyss-100: #d3e0ed;
+  --color-abyss-200: #a7c0d9;
+  --color-abyss-300: #6f95b8;
+  --color-abyss-400: #3f6a93;
+  --color-abyss-500: #21496f;
+  --color-abyss-600: #143656;
+  --color-abyss-700: #0d2942;
+  --color-abyss-800: #081d31;
+  --color-abyss-900: #051424;
+  --color-abyss-950: #030d18;
+
+  /* --- Colour: water blue, the accent that carries the motion ------------ */
+  --color-aqua-50: #edfaff;
+  --color-aqua-100: #d5f2fd;
+  --color-aqua-200: #b0e7fb;
+  --color-aqua-300: #79d7f7;
+  --color-aqua-400: #3abdee;
+  --color-aqua-500: #14a2dc;
+  --color-aqua-600: #0782ba;
+  --color-aqua-700: #0a6796;
+  --color-aqua-800: #10567b;
+  --color-aqua-900: #124867;
+  --color-aqua-950: #0b2e45;
+
+  /* --- Colour: mineral green, used sparingly for sustainability & trust --- */
+  --color-mineral-50: #f0f9f4;
+  --color-mineral-100: #dbf0e3;
+  --color-mineral-200: #b9e1cb;
+  --color-mineral-300: #8bcaab;
+  --color-mineral-400: #57ac86;
+  --color-mineral-500: #35906b;
+  --color-mineral-600: #257355;
+  --color-mineral-700: #1e5c46;
+  --color-mineral-800: #1a4a39;
+  --color-mineral-900: #163d30;
+
+  /* --- Colour: neutrals. Off-white, never pure #fff on large surfaces ---- */
+  --color-mist-50: #fbfcfd;
+  --color-mist-100: #f5f8fa;
+  --color-mist-200: #edf2f5;
+  --color-mist-300: #dfe7ec;
+  --color-mist-400: #c3cfd7;
+  --color-mist-500: #94a5b1;
+  --color-mist-600: #6b7d8a;
+  --color-mist-700: #4d5c67;
+
+  /* --- Semantic aliases -------------------------------------------------- */
+  --color-canvas: var(--color-mist-50);
+  --color-canvas-deep: var(--color-abyss-950);
+  --color-ink: var(--color-abyss-900);
+  --color-ink-muted: var(--color-mist-700);
+  --color-line: var(--color-mist-300);
+
+  /* --- Typography --------------------------------------------------------
+     `--font-display` and `--font-sans` are bound in the root layout to the
+     locale-appropriate faces (Manrope for Latin, Vazirmatn for fa/ar).      */
+  --font-display: var(--font-brand-display), "Manrope", "Segoe UI", sans-serif;
+  --font-sans: var(--font-brand-sans), "Manrope", "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "Menlo", monospace;
+
+  /* Fluid type scale — clamps so a 320px phone and a 2560px display both
+     get a readable measure without a dozen breakpoint overrides. */
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: clamp(1.0625rem, 0.25vw + 1rem, 1.1875rem);
+  --text-xl: clamp(1.1875rem, 0.5vw + 1.05rem, 1.375rem);
+  --text-2xl: clamp(1.375rem, 0.9vw + 1.15rem, 1.75rem);
+  --text-3xl: clamp(1.75rem, 1.6vw + 1.3rem, 2.5rem);
+  --text-4xl: clamp(2.125rem, 2.6vw + 1.4rem, 3.5rem);
+  --text-5xl: clamp(2.5rem, 4vw + 1.4rem, 4.75rem);
+  --text-6xl: clamp(3rem, 6.2vw + 1.2rem, 7rem);
+  --text-hero: clamp(3.25rem, 9vw + 0.5rem, 10rem);
+
+  /* --- Radii & elevation -------------------------------------------------- */
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 2rem;
+  --radius-pill: 999px;
+
+  --shadow-glass: 0 1px 0 0 rgb(255 255 255 / 0.35) inset,
+    0 24px 60px -28px rgb(5 20 36 / 0.45);
+  --shadow-lift: 0 18px 48px -24px rgb(5 20 36 / 0.35);
+
+  /* --- Motion tokens ------------------------------------------------------
+     Layer 2 of the architecture. Durations and curves live here so that the
+     GSAP timelines, the CSS transitions and the Motion components all move
+     with the same physical character.                                       */
+  --ease-water: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-drop: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-swell: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast: 220ms;
+  --duration-base: 420ms;
+  --duration-slow: 760ms;
+  --duration-cinematic: 1200ms;
+
+  /* --- Layout ------------------------------------------------------------- */
+  --container-shell: 88rem;
+  --spacing-gutter: clamp(1.25rem, 4vw, 4.5rem);
+  --spacing-section: clamp(5rem, 11vw, 11rem);
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-color: var(--color-line);
+  }
+
+  html {
+    /* Lenis drives scrolling; native smooth-scroll would fight it. */
+    scroll-behavior: auto;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+
+  /* Persian and Arabic numerals in body copy, Latin in tabular data. */
+  :lang(fa),
+  :lang(ar) {
+    font-variant-numeric: normal;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  :lang(fa) h1, :lang(fa) h2, :lang(fa) h3, :lang(fa) h4,
+  :lang(ar) h1, :lang(ar) h2, :lang(ar) h3, :lang(ar) h4 {
+    /* Persian/Arabic faces need positive tracking, not negative, and their
+       ascenders and descenders will not survive a sub-1 line height. */
+    letter-spacing: 0;
+    font-weight: 500;
+    line-height: 1.18;
+  }
+
+  /* The display sizes are tuned to Latin metrics; Arabic-script faces carry
+     more vertical mass at the same point size, so step them down. */
+  :lang(fa) h1, :lang(ar) h1 {
+    font-size: clamp(2.5rem, 6.6vw + 0.5rem, 7.5rem);
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: var(--color-aqua-200);
+    color: var(--color-abyss-900);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-aqua-500);
+    outline-offset: 3px;
+    border-radius: var(--radius-xs);
+  }
+
+  /* Lenis adds this class while it is in control of the scroll position. */
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+}
+
+/* ==========================================================================
+   Utilities
+   ========================================================================== */
+
+@utility shell {
+  width: 100%;
+  max-width: var(--container-shell);
+  margin-inline: auto;
+  padding-inline: var(--spacing-gutter);
+}
+
+@utility section-y {
+  padding-block: var(--spacing-section);
+}
+
+/* Frosted "glass / water" surface — the fourth colour in the palette. */
+@utility glass {
+  background: linear-gradient(
+    145deg,
+    rgb(255 255 255 / 0.14),
+    rgb(255 255 255 / 0.04)
+  );
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid rgb(255 255 255 / 0.16);
+}
+
+@utility glass-light {
+  background: linear-gradient(
+    145deg,
+    rgb(255 255 255 / 0.9),
+    rgb(255 255 255 / 0.55)
+  );
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid rgb(255 255 255 / 0.7);
+}
+
+/* Numbers in tables must line up regardless of the UI language. */
+@utility tabular {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+@utility text-balance-none {
+  text-wrap: nowrap;
+}
+
+/* Reveal primitives. The JS layer only toggles `data-revealed`, so if the
+   bundle fails to load the content is still visible (see the fallback). */
+@utility reveal-mask {
+  clip-path: inset(0 0 100% 0);
+}
+
+/* ==========================================================================
+   Progressive enhancement
+   --------------------------------------------------------------------------
+   Content is authored visible. `js-motion` is set on <html> by MotionProvider
+   only once the client bundle is running, which is the only moment it becomes
+   safe to hide something and animate it in.
+   ========================================================================== */
+
+[data-reveal] {
+  opacity: 1;
+  transform: none;
+}
+
+html.js-motion [data-reveal]:not([data-revealed="true"]) {
+  opacity: 0;
+}
+
+html.js-motion [data-reveal="up"]:not([data-revealed="true"]) {
+  transform: translate3d(0, 2.5rem, 0);
+}
+html.js-motion [data-reveal="down"]:not([data-revealed="true"]) {
+  transform: translate3d(0, -2.5rem, 0);
+}
+html.js-motion [data-reveal="start"]:not([data-revealed="true"]) {
+  transform: translate3d(calc(-2.5rem * var(--flow-x, 1)), 0, 0);
+}
+html.js-motion [data-reveal="scale"]:not([data-revealed="true"]) {
+  transform: scale(1.06);
+}
+
+[data-reveal] {
+  transition:
+    opacity var(--duration-slow) var(--ease-water),
+    transform var(--duration-slow) var(--ease-water);
+  will-change: opacity, transform;
+}
+
+[dir="rtl"] {
+  --flow-x: -1;
+}
+[dir="ltr"] {
+  --flow-x: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js-motion [data-reveal]:not([data-revealed="true"]) {
+    opacity: 1;
+    transform: none;
+  }
+  [data-reveal] {
+    transition: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Device tiers set by `useDeviceTier` — the 3D scene is only mounted on
+   `high`, `medium` gets video, `low` gets a static poster. */
+html[data-tier="low"] .tier-3d,
+html[data-tier="medium"] .tier-3d {
+  display: none;
+}
+html[data-tier="low"] .tier-video {
+  display: none;
+}
+html[data-tier="high"] .tier-poster,
+html[data-tier="medium"] .tier-poster {
+  display: none;
+}
+
+/* ==========================================================================
+   Long-form copy
+   --------------------------------------------------------------------------
+   Applied to sanitised CMS HTML (news articles, legal pages). Scoped to a
+   single class so editor output can never restyle the rest of the site.
+   ========================================================================== */
+
+.prose-vitaqueen {
+  color: var(--color-ink-muted);
+  font-size: var(--text-lg);
+  line-height: 1.75;
+}
+
+.prose-vitaqueen > * + * {
+  margin-block-start: 1.4em;
+}
+
+.prose-vitaqueen h2,
+.prose-vitaqueen h3 {
+  color: var(--color-abyss-900);
+  margin-block-start: 2em;
+}
+
+.prose-vitaqueen h2 {
+  font-size: var(--text-2xl);
+}
+
+.prose-vitaqueen h3 {
+  font-size: var(--text-xl);
+}
+
+.prose-vitaqueen a {
+  color: var(--color-aqua-700);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.prose-vitaqueen ul,
+.prose-vitaqueen ol {
+  padding-inline-start: 1.35em;
+}
+
+.prose-vitaqueen ul {
+  list-style: disc;
+}
+
+.prose-vitaqueen ol {
+  list-style: decimal;
+}
+
+.prose-vitaqueen li + li {
+  margin-block-start: 0.5em;
+}
+
+.prose-vitaqueen blockquote {
+  border-inline-start: 2px solid var(--color-aqua-400);
+  padding-inline-start: 1.25em;
+  color: var(--color-abyss-700);
+  font-style: normal;
+}
+
+.prose-vitaqueen img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+
+.prose-vitaqueen table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.prose-vitaqueen th,
+.prose-vitaqueen td {
+  border-block-end: 1px solid var(--color-line);
+  padding-block: 0.7em;
+  text-align: start;
+}

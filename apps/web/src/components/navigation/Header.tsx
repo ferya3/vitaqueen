@@ -1,0 +1,132 @@
+'use client';
+
+import { useState, useSyncExternalStore } from 'react';
+import { useTranslations } from 'next-intl';
+import { Link, usePathname } from '@/i18n/navigation';
+import { primaryNavigation } from '@/config/navigation';
+import { Logo } from '@/components/ui/Logo';
+import { ScrollProgress } from '@/components/motion/ScrollProgress';
+import { ChevronIcon } from '@/components/ui/Icons';
+import { cn } from '@/lib/cn';
+import { siteConfig } from '@/config/site';
+import { LocaleSwitcher } from './LocaleSwitcher';
+import { MobileMenu } from './MobileMenu';
+
+/**
+ * Reads the scroll position without an effect, and re-renders only when the
+ * boolean actually flips rather than on every scroll event.
+ */
+function useScrolledPast(threshold: number) {
+  return useSyncExternalStore(
+    (onChange) => {
+      window.addEventListener('scroll', onChange, { passive: true });
+      return () => window.removeEventListener('scroll', onChange);
+    },
+    () => window.scrollY > threshold,
+    () => false,
+  );
+}
+
+/**
+ * The header sits over the hero in its transparent state and turns into a solid
+ * bar once the visitor has scrolled past it.
+ */
+export function Header() {
+  const t = useTranslations('nav');
+  const pathname = usePathname();
+  const scrolled = useScrolledPast(24);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [openKey, setOpenKey] = useState<string | null>(null);
+
+  // Close the menu and any open dropdown when the route changes. Adjusting
+  // state during render (rather than in an effect) avoids the extra commit
+  // where the old menu is still on screen over the new page.
+  const [lastPathname, setLastPathname] = useState(pathname);
+  if (lastPathname !== pathname) {
+    setLastPathname(pathname);
+    setMenuOpen(false);
+    setOpenKey(null);
+  }
+
+  return (
+    <>
+      <header
+        className={cn(
+          'fixed inset-x-0 top-0 z-90 transition-[background-color,backdrop-filter,border-color] duration-(--duration-base)',
+          scrolled
+            ? 'border-b border-white/10 bg-abyss-950/85 backdrop-blur-xl'
+            : 'border-b border-transparent bg-transparent',
+        )}
+        onMouseLeave={() => setOpenKey(null)}
+      >
+        <div className="shell flex h-20 items-center justify-between gap-6">
+          <Link href="/" className="text-mist-50 transition-opacity hover:opacity-80">
+            <Logo label={siteConfig.name} />
+            <span className="sr-only">{t('home')}</span>
+          </Link>
+
+          <nav aria-label="Primary" className="hidden xl:block">
+            <ul className="flex items-center gap-1">
+              {primaryNavigation.map((item) => {
+                const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                return (
+                  <li
+                    key={item.key}
+                    className="relative"
+                    onMouseEnter={() => setOpenKey(item.children ? item.key : null)}
+                  >
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        'inline-flex items-center gap-1 whitespace-nowrap rounded-pill px-3 py-2 text-sm transition-colors',
+                        active ? 'text-aqua-300' : 'text-mist-200 hover:text-white',
+                      )}
+                    >
+                      {t(item.key)}
+                      {item.children ? <ChevronIcon className="h-3.5 w-3.5 opacity-60" /> : null}
+                    </Link>
+
+                    {item.children && openKey === item.key ? (
+                      <ul className="absolute start-0 top-full min-w-[15rem] overflow-hidden rounded-md border border-white/10 bg-abyss-900/95 py-2 shadow-lift backdrop-blur-xl">
+                        {item.children.map((child) => (
+                          <li key={child.key}>
+                            <Link
+                              href={child.href}
+                              className="block px-4 py-2.5 text-sm text-mist-300 transition-colors hover:bg-white/8 hover:text-white"
+                            >
+                              {t(child.key)}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+
+          <div className="flex items-center gap-2">
+            <LocaleSwitcher tone="light" label={t('language')} />
+            <button
+              type="button"
+              onClick={() => setMenuOpen(true)}
+              className="inline-flex items-center gap-2 rounded-pill border border-white/15 px-4 py-2 text-sm text-mist-200 transition-colors hover:border-white/40 hover:text-white xl:hidden"
+              aria-haspopup="dialog"
+            >
+              <span className="flex flex-col gap-1" aria-hidden>
+                <span className="h-px w-4 bg-current" />
+                <span className="h-px w-4 bg-current" />
+              </span>
+              {t('menu')}
+            </button>
+          </div>
+        </div>
+
+        <ScrollProgress />
+      </header>
+
+      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+    </>
+  );
+}

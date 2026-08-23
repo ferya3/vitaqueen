@@ -1,0 +1,61 @@
+# ---------------------------------------------------------------------------
+# Local development stack.
+#
+# Production runs on a real host behind Cloudflare and nginx (see
+# infra/nginx/vitaqueen.conf); this file exists so a developer gets MySQL and
+# Redis with one command and does not invent their own versions.
+#
+# Every port here is bound to 127.0.0.1 on purpose. A database published on
+# 0.0.0.0 during development is how development databases end up on the
+# internet.
+# ---------------------------------------------------------------------------
+name: vitaqueen
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3306:3306"
+    environment:
+      MYSQL_DATABASE: vitaqueen
+      MYSQL_USER: vitaqueen_app
+      MYSQL_PASSWORD: ${DB_PASSWORD:-local-dev-only}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-local-dev-only}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # Catches outgoing mail so a developer never sends a test enquiry to a real
+  # mailbox. SMTP on 1025, web UI on 8025.
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+
+volumes:
+  mysql:
+  redis:

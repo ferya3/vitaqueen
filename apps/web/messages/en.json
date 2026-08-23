@@ -1,0 +1,484 @@
+{
+  "meta": {
+    "siteName": "VitaQueen",
+    "tagline": "Natural Mineral Water",
+    "description": "VitaQueen natural mineral water — drawn from a protected mountain spring, bottled at source under continuous laboratory control.",
+    "ogAlt": "VitaQueen natural mineral water"
+  },
+  "nav": {
+    "menu": "Menu",
+    "close": "Close",
+    "language": "Language",
+    "home": "Home",
+    "about": "About",
+    "aboutCompany": "Company",
+    "aboutHistory": "History",
+    "aboutVision": "Vision & Mission",
+    "aboutManagement": "Management",
+    "source": "The Source",
+    "sourceSpring": "Natural Spring",
+    "sourceGeography": "Geography",
+    "sourceCharacteristics": "Water Characteristics",
+    "sourceProtection": "Source Protection",
+    "products": "Products",
+    "productsCategories": "Categories",
+    "productsPackaging": "Packaging",
+    "productsSpecifications": "Technical Specifications",
+    "factory": "The Factory",
+    "factoryLine": "Production Line",
+    "factoryFiltration": "Filtration",
+    "factoryBottling": "Bottling",
+    "factoryControl": "Quality Control",
+    "factoryLaboratory": "Laboratory",
+    "quality": "Quality",
+    "qualityControl": "Quality Control",
+    "qualityLaboratory": "Laboratory",
+    "qualityCertifications": "Certifications",
+    "qualityAnalysis": "Water Analysis",
+    "sustainability": "Sustainability",
+    "sustainabilityEnvironment": "Environment",
+    "sustainabilityEnergy": "Energy",
+    "sustainabilityWater": "Water Protection",
+    "sustainabilityRecycling": "Recycling",
+    "export": "Export",
+    "news": "News",
+    "distributors": "Distributors",
+    "contact": "Contact"
+  },
+  "common": {
+    "explore": "Explore",
+    "learnMore": "Learn more",
+    "viewAll": "View all",
+    "viewProduct": "View product",
+    "download": "Download",
+    "downloadDatasheet": "Download datasheet",
+    "back": "Back",
+    "scrollToExplore": "Scroll to explore",
+    "loading": "Loading",
+    "error": "Something went wrong. Please try again.",
+    "notFoundTitle": "Page not found",
+    "notFoundBody": "The page you are looking for has moved or never existed.",
+    "backHome": "Back to home",
+    "skipToContent": "Skip to content",
+    "value": "Value",
+    "unit": "Unit",
+    "parameter": "Parameter",
+    "limit": "Permitted limit",
+    "reduceMotionNotice": "Motion reduced to match your system preference.",
+    "sampleData": "Sample data — the published figures replace these as soon as the content system is connected."
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "Natural mineral water",
+      "line1": "Pure water.",
+      "line2": "Born from",
+      "line3": "nature.",
+      "subtitle": "Drawn at 2,140 m from a spring that has been filtering through mountain rock for centuries — untouched between the source and the seal.",
+      "primaryCta": "Discover the source",
+      "secondaryCta": "See the products"
+    },
+    "journey": {
+      "eyebrow": "From source to bottle",
+      "title": "One journey, six controlled steps",
+      "spring": {
+        "title": "Spring",
+        "body": "Water surfaces under its own artesian pressure inside a fenced protection perimeter."
+      },
+      "water": {
+        "title": "Water",
+        "body": "It travels through stainless steel lines in a closed circuit — no pumps open to the air."
+      },
+      "filtration": {
+        "title": "Filtration",
+        "body": "Micro-filtration removes particles without touching the natural mineral profile."
+      },
+      "laboratory": {
+        "title": "Laboratory",
+        "body": "Physical, chemical and microbiological parameters are checked on every production batch."
+      },
+      "bottling": {
+        "title": "Bottling",
+        "body": "Blowing, filling and capping happen in one aseptic monoblock, seconds apart."
+      },
+      "product": {
+        "title": "Final product",
+        "body": "Every pallet is traceable back to its batch, its shift and its analysis sheet."
+      }
+    },
+    "story": {
+      "s01": {
+        "index": "01",
+        "title": "Born from the earth",
+        "body": "Rain and snowmelt take decades to travel down through the limestone. What comes back up is already mineral water — we only protect it."
+      },
+      "s02": {
+        "index": "02",
+        "title": "A journey through nature",
+        "body": "No chemical treatment, no reconstitution, no blending. The composition you read on the label is the composition of the spring."
+      },
+      "s03": {
+        "index": "03",
+        "title": "Protected by nature",
+        "body": "The catchment area sits above any farming or industrial activity, inside a legally defined protection zone."
+      },
+      "s04": {
+        "index": "04",
+        "title": "Pure by nature. Controlled by science.",
+        "body": "An in-house laboratory runs continuous physicochemical and microbiological testing, backed by accredited external labs."
+      },
+      "s05": {
+        "index": "05",
+        "title": "From source to bottle",
+        "body": "The bottling hall stands on the spring itself. The water never leaves the site before it is sealed."
+      }
+    },
+    "sourceTeaser": {
+      "eyebrow": "The source",
+      "title": "A spring at 2,140 metres",
+      "body": "Altitude, geology and a protected catchment give the water a stable mineral signature all year round.",
+      "cta": "Explore the source"
+    },
+    "productsTeaser": {
+      "eyebrow": "Products",
+      "title": "Five formats, one water",
+      "body": "From the 330 ml on-the-go bottle to the 5 L home pack — the same analysis sheet in every one.",
+      "cta": "See all products"
+    },
+    "qualityTeaser": {
+      "eyebrow": "Quality & certifications",
+      "title": "Trust is measured, not claimed",
+      "body": "Batch records, accredited analyses and published certificates — all of it available before you ask for it.",
+      "cta": "See quality"
+    },
+    "sustainabilityTeaser": {
+      "eyebrow": "Sustainability",
+      "title": "Protecting what we bottle",
+      "body": "Source protection, energy efficiency, recyclable packaging and waste reduction — with numbers, not adjectives.",
+      "cta": "See our commitments"
+    },
+    "cta": {
+      "title": "Let's talk",
+      "body": "Distribution, private label or an export enquiry — our commercial team answers within two working days.",
+      "primary": "Contact us",
+      "secondary": "Export enquiries"
+    }
+  },
+  "about": {
+    "eyebrow": "About",
+    "title": "A factory built around a spring",
+    "lead": "VitaQueen bottles natural mineral water at source. Everything else — the buildings, the lines, the laboratory — exists to keep that water exactly as the mountain delivers it.",
+    "company": {
+      "title": "The company",
+      "body": "VitaQueen operates a bottling plant on its own concession, from raw water extraction through to palletised finished goods. Production, quality assurance and logistics are managed in-house."
+    },
+    "history": {
+      "title": "History",
+      "body": "Milestones from the concession survey to the current production capacity."
+    },
+    "vision": {
+      "title": "Vision",
+      "body": "To be the mineral water that specifiers, hotels and export buyers choose because its documentation is as good as its taste."
+    },
+    "mission": {
+      "title": "Mission",
+      "body": "Bottle at source, publish every analysis, and never change the water to fit a marketing story."
+    },
+    "management": {
+      "title": "Management",
+      "body": "The leadership team behind production, quality and commercial operations."
+    },
+    "stats": {
+      "capacity": "Bottles per hour",
+      "altitude": "Source altitude",
+      "formats": "Packaging formats",
+      "markets": "Export markets"
+    }
+  },
+  "source": {
+    "eyebrow": "The source",
+    "title": "Where the water begins",
+    "lead": "The value of a mineral water is decided long before the bottling hall. It is decided by the rock it passes through.",
+    "spring": {
+      "title": "Natural spring",
+      "body": "The spring is artesian: water reaches the surface under its own pressure, which means the aquifer stays sealed from surface contamination."
+    },
+    "geography": {
+      "title": "Geography",
+      "body": "The catchment sits in a high mountain basin with no farming, no industry and no road traffic above the collection point."
+    },
+    "characteristics": {
+      "title": "Water characteristics",
+      "body": "Measured at the wellhead. These values are stable within seasonal tolerance and are re-verified on every batch."
+    },
+    "protection": {
+      "title": "Source protection",
+      "body": "A fenced perimeter, monitored piezometers and a legally registered protection zone keep the aquifer intact."
+    },
+    "facts": {
+      "altitude": "Altitude",
+      "coordinates": "Coordinates",
+      "type": "Source type",
+      "age": "Estimated aquifer age",
+      "temperature": "Water temperature at source",
+      "ph": "pH",
+      "tds": "TDS",
+      "hardness": "Total hardness"
+    },
+    "minerals": {
+      "title": "Mineral composition",
+      "body": "Milligrams per litre at the wellhead.",
+      "calcium": "Calcium",
+      "magnesium": "Magnesium",
+      "sodium": "Sodium",
+      "potassium": "Potassium",
+      "bicarbonate": "Bicarbonate",
+      "sulfate": "Sulfate",
+      "chloride": "Chloride",
+      "nitrate": "Nitrate",
+      "silica": "Silica",
+      "fluoride": "Fluoride"
+    },
+    "map": {
+      "title": "The water's route",
+      "mountains": "Mountains",
+      "sourcePoint": "Source",
+      "journey": "Water journey",
+      "plant": "Bottling plant"
+    }
+  },
+  "products": {
+    "eyebrow": "Products",
+    "title": "One water, five formats",
+    "lead": "Every format carries the same water, the same analysis and the same traceability. Only the use case changes.",
+    "categories": "Categories",
+    "packaging": "Packaging",
+    "specifications": "Technical specifications",
+    "specs": {
+      "volume": "Volume",
+      "packaging": "Packaging",
+      "bottleType": "Bottle type",
+      "capType": "Cap type",
+      "ph": "pH",
+      "tds": "TDS",
+      "shelfLife": "Shelf life",
+      "unitsPerCase": "Units per case",
+      "casesPerPallet": "Cases per pallet",
+      "barcode": "Barcode"
+    },
+    "detail": {
+      "gallery": "Gallery",
+      "specifications": "Specifications",
+      "minerals": "Mineral composition",
+      "packaging": "Packaging & logistics",
+      "nutrition": "Nutrition",
+      "certificates": "Certificates",
+      "related": "Other formats"
+    },
+    "nutrition": {
+      "title": "Nutrition per 100 ml",
+      "energy": "Energy",
+      "fat": "Fat",
+      "carbohydrate": "Carbohydrate",
+      "protein": "Protein",
+      "salt": "Salt"
+    }
+  },
+  "factory": {
+    "eyebrow": "The factory",
+    "title": "Eight stages, one continuous line",
+    "lead": "Scroll through the plant the way the water moves through it.",
+    "metrics": {
+      "capacity": "Line capacity",
+      "technology": "Technology",
+      "speed": "Throughput",
+      "control": "Control point"
+    },
+    "stages": {
+      "waterSource": {
+        "title": "Water source",
+        "body": "Extraction at the wellhead under continuous flow and pressure monitoring."
+      },
+      "rawWater": {
+        "title": "Raw water",
+        "body": "Closed stainless steel transfer to buffer tanks, with no exposure to the atmosphere."
+      },
+      "treatment": {
+        "title": "Treatment",
+        "body": "Micro-filtration cascade down to 0.2 µm. Nothing is added, nothing that belongs to the water is removed."
+      },
+      "qualityControl": {
+        "title": "Quality control",
+        "body": "In-line sampling before filling: conductivity, pH, turbidity and microbiology."
+      },
+      "bottling": {
+        "title": "Bottling",
+        "body": "Blow-fill-cap monoblock. Preform to sealed bottle in a single enclosed cycle."
+      },
+      "packaging": {
+        "title": "Packaging",
+        "body": "Labelling, date coding, shrink wrapping and palletising with batch identification."
+      },
+      "warehouse": {
+        "title": "Warehouse",
+        "body": "Quarantine until the batch release certificate is signed by the laboratory."
+      },
+      "distribution": {
+        "title": "Distribution",
+        "body": "Dispatch to domestic distributors and export containers, fully traceable per pallet."
+      }
+    }
+  },
+  "quality": {
+    "eyebrow": "Quality",
+    "title": "Trust is a document, not an adjective",
+    "lead": "For a mineral water, credibility matters more than animation. Everything on this page can be verified.",
+    "control": {
+      "title": "Quality control",
+      "body": "Sampling plan, in-process checks and batch release. No pallet leaves quarantine without a signed certificate of analysis."
+    },
+    "laboratory": {
+      "title": "Laboratory",
+      "body": "The on-site laboratory runs physicochemical and microbiological testing on every shift, cross-checked periodically by accredited external laboratories."
+    },
+    "certifications": {
+      "title": "Certifications",
+      "body": "Only certificates that are currently held and verifiable are listed here."
+    },
+    "analysis": {
+      "title": "Water analysis",
+      "body": "Full analysis at the wellhead. Values in mg/L unless stated otherwise."
+    },
+    "table": {
+      "parameter": "Parameter",
+      "result": "Result",
+      "unit": "Unit",
+      "limit": "Permitted limit",
+      "method": "Method"
+    },
+    "certificateMeta": {
+      "issuer": "Issuer",
+      "number": "Certificate no.",
+      "validUntil": "Valid until",
+      "scope": "Scope"
+    },
+    "empty": "Certificates are being updated. Please contact us for the current documentation."
+  },
+  "sustainability": {
+    "eyebrow": "Sustainability",
+    "title": "Protecting what we bottle",
+    "lead": "A mineral water company that damages its own catchment has no product in twenty years. This is self-interest as much as ethics.",
+    "pillars": {
+      "p01": {
+        "index": "01",
+        "title": "Source protection",
+        "body": "Fenced perimeter, piezometric monitoring and a legally registered protection zone around the catchment."
+      },
+      "p02": {
+        "index": "02",
+        "title": "Energy efficiency",
+        "body": "Heat recovery on the blowing line, high-efficiency compressors and on-site solar generation."
+      },
+      "p03": {
+        "index": "03",
+        "title": "Recyclable packaging",
+        "body": "Mono-material PET bottles and caps, lighter preforms and recyclable stretch film."
+      },
+      "p04": {
+        "index": "04",
+        "title": "Waste reduction",
+        "body": "Segregated production waste, reprocessed PET scrap and reduced water use per litre bottled."
+      }
+    },
+    "metrics": {
+      "title": "Measured, not claimed",
+      "body": "Figures are published once they are verified for a full production year."
+    }
+  },
+  "export": {
+    "eyebrow": "Export",
+    "title": "Built for international buyers",
+    "lead": "Documentation, packaging and lead times prepared for container-load export.",
+    "markets": {
+      "title": "Export markets",
+      "body": "Current and target destinations for containerised shipments."
+    },
+    "privateLabel": {
+      "title": "Private label",
+      "body": "Your brand, our source. Artwork, format and case configuration to your specification, with the same analysis and traceability."
+    },
+    "packaging": {
+      "title": "Export packaging",
+      "body": "Case counts, pallet patterns and container loading plans available on request."
+    },
+    "contact": {
+      "title": "International contact",
+      "body": "Send us your destination, format and target volume — we reply with a quotation and a documentation pack."
+    }
+  },
+  "news": {
+    "eyebrow": "News",
+    "title": "From the plant",
+    "lead": "Production, certification and market updates.",
+    "empty": "No articles published yet.",
+    "readMore": "Read article",
+    "published": "Published"
+  },
+  "distributors": {
+    "eyebrow": "Distributors",
+    "title": "Representatives & partners",
+    "lead": "Find your regional distributor, or apply to become one.",
+    "findTitle": "Find a distributor",
+    "applyTitle": "Become a distributor",
+    "region": "Region",
+    "company": "Company",
+    "phone": "Phone",
+    "empty": "The distributor list is being updated. Please contact us directly."
+  },
+  "contact": {
+    "eyebrow": "Contact",
+    "title": "Talk to the people who run the line",
+    "lead": "Commercial, quality and export enquiries reach the responsible team directly.",
+    "form": {
+      "name": "Full name",
+      "email": "Email",
+      "phone": "Phone",
+      "company": "Company",
+      "subject": "Subject",
+      "message": "Message",
+      "topic": "Enquiry type",
+      "topics": {
+        "general": "General",
+        "sales": "Sales & distribution",
+        "export": "Export",
+        "quality": "Quality & documentation",
+        "career": "Careers"
+      },
+      "submit": "Send message",
+      "sending": "Sending…",
+      "success": "Thank you. Your message has been received.",
+      "failure": "Your message could not be sent. Please try again or email us directly.",
+      "consent": "I agree that my details may be used to answer this enquiry.",
+      "required": "This field is required",
+      "invalidEmail": "Enter a valid email address",
+      "tooShort": "Please write at least 20 characters"
+    },
+    "office": {
+      "title": "Head office",
+      "factory": "Factory",
+      "email": "Email",
+      "phone": "Phone",
+      "hours": "Working hours"
+    }
+  },
+  "footer": {
+    "about": "Natural mineral water bottled at source under continuous laboratory control.",
+    "explore": "Explore",
+    "company": "Company",
+    "legal": "Legal",
+    "privacy": "Privacy policy",
+    "terms": "Terms of use",
+    "cookies": "Cookie policy",
+    "rights": "All rights reserved.",
+    "backToTop": "Back to top"
+  }
+}

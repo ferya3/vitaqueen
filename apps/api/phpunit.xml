@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <!-- Production runs with debug off, so the suite does too: it is the
+             difference between a validation error rendering as 422 and as 500. -->
+        <env name="APP_DEBUG" value="false"/>
+        <!-- Fixed test key so the suite runs without a .env file (CI). Encrypted
+             casts such as `two_factor_secret` need one. Not used anywhere else. -->
+        <env name="APP_KEY" value="base64:EQidn/LpgMZgJ7LqNNaotRD96Afck1KJVx4pH0xWack="/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <!-- Argon2id is the production hasher; tests use cheap bcrypt so the
+             suite is not dominated by key derivation. -->
+        <env name="HASH_DRIVER" value="bcrypt"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="BROADCAST_CONNECTION" value="null"/>
+        <env name="CACHE_STORE" value="array"/>
+        <env name="DB_CONNECTION" value="sqlite"/>
+        <env name="DB_DATABASE" value=":memory:"/>
+        <env name="DB_URL" value=""/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="PULSE_ENABLED" value="false"/>
+        <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="NIGHTWATCH_ENABLED" value="false"/>
+    </php>
+</phpunit>
