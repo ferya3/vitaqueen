@@ -32,7 +32,7 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex items-center gap-2 rounded-pill border border-white/15 px-4 py-2 text-sm text-mist-200 transition-colors hover:border-white/40 hover:text-white"
+              className="inline-flex min-h-11 items-center gap-2 rounded-pill border border-white/15 px-4 py-2 text-sm text-mist-200 transition-colors hover:border-white/40 hover:text-white"
             >
               <CloseIcon />
               {t('close')}

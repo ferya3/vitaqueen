@@ -43,7 +43,7 @@ export function PageHero({
         <TextReveal
           as="h1"
           split="lines"
-          className="mt-6 max-w-4xl font-display text-5xl leading-[1.02]"
+          className="mt-6 max-w-4xl font-display text-5xl leading-(--leading-display)"
         >
           {title}
         </TextReveal>

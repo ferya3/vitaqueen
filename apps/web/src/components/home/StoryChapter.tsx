@@ -37,7 +37,7 @@ export function StoryChapter({
           <Parallax amount={0.16} className="absolute inset-[-12%]">
             <WaterBackdrop variant={backdrop} className="h-full" />
           </Parallax>
-          <span className="absolute bottom-6 start-6 font-display text-7xl text-white/25 tabular">
+          <span className="absolute bottom-6 start-6 font-display text-5xl text-white/25 tabular">
             {t('index')}
           </span>
         </div>

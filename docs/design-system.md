@@ -43,15 +43,36 @@ according to the locale's script.
 Both are self-hosted by `next/font/google`, so there is no runtime request to a
 third-party font host and `font-src` in the CSP stays `'self'`.
 
-The fluid scale runs from `--text-2xs` to `--text-hero`, each a `clamp()`. A
-320 px phone and a 2560 px display both get a readable measure without a dozen
-breakpoint overrides.
+The scale is written **mobile first**: every step's `clamp()` minimum is the
+size a 360 px phone gets, and it grows to its cap at 1440 px and holds there.
+The `vw` coefficient of each step is the slope between those two anchors, so the
+whole scale grows at one rate and the hierarchy holds at every width between —
+no breakpoint overrides, and nothing that keeps inflating on a 2560 px display.
+
+| Token | 360 px | 1440 px and wider | Typical use |
+| --- | --- | --- | --- |
+| `--text-hero` | 40 px | 88 px | Home hero only |
+| `--text-6xl` | 36 px | 68 px | Oversized numerals |
+| `--text-5xl` | 32 px | 56 px | Page hero, closing CTA |
+| `--text-4xl` | 28 px | 44 px | Section headings |
+| `--text-3xl` | 24 px | 34 px | Sub-headings, card titles |
+| `--text-2xl` | 20 px | 28 px | Lead-ins |
+| `--text-xl` | 18 px | 22 px | Large body |
+| `--text-lg` … `--text-2xs` | fixed | fixed | Body and labels |
+
+Below `--text-xl` nothing scales with the viewport. Body copy that grows with
+the window is a readability problem, not a feature: 16 px stays 16 px.
 
 **Script-specific corrections.** Display sizes are tuned to Latin metrics.
 Arabic-script faces carry more vertical mass at the same point size, so
-`globals.css` steps `h1` down and raises `line-height` to `1.18` for `:lang(fa)`
-and `:lang(ar)`, and drops the negative tracking that suits Manrope and ruins
-Vazirmatn. Without this the Persian hero clips its own descenders.
+`globals.css` redefines `--text-hero`, `--text-6xl`, `--text-5xl` and
+`--leading-display` on `html:lang(fa)` and `html:lang(ar)` — roughly a 9 % step
+down and a looser line — and drops the negative tracking that suits Manrope and
+ruins Vazirmatn. Without this the Persian hero clips its own descenders.
+
+The correction lives on the *tokens*, not on `h1`. A `text-hero` utility beats
+any base-layer rule, so a base-layer `font-size` for `:lang(fa)` never reaches
+the hero it was written for; setting the variable does.
 
 ## Spacing and layout
 
@@ -66,6 +87,12 @@ component is setting its own `padding-block`, it is doing the section's job.
 
 Everything uses logical properties — `padding-inline`, `text-start`, `end-0`,
 `ms-*` — so RTL is a `dir` attribute rather than a stylesheet fork.
+
+**Touch targets are the mobile default, and the compact version is the
+override.** The header controls and the footer link columns carry `min-h-11`
+(44 px) or their own vertical padding on a phone and shed it at `lg`, rather
+than the other way round. Inline links inside a sentence — breadcrumbs, prose
+— are exempt, as they are in WCAG 2.5.8.
 
 ## Motion tokens
 

@@ -46,7 +46,7 @@ export function LocaleSwitcher({
         aria-label={label}
         disabled={pending}
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-pill px-3 py-2 text-sm transition-colors',
+          'inline-flex min-h-11 items-center gap-1.5 rounded-pill px-3 py-2 text-sm transition-colors lg:min-h-0',
           tone === 'light'
             ? 'text-mist-200 hover:text-white'
             : 'text-abyss-700 hover:text-abyss-900',

@@ -22,11 +22,11 @@ export function Footer() {
         <div className="max-w-sm">
           <Logo label={siteConfig.name} className="text-mist-50" />
           <p className="mt-5 text-sm leading-relaxed text-mist-400">{t('about')}</p>
-          <div className="mt-6 space-y-1 text-sm">
-            <a href={`mailto:${siteConfig.email}`} className="block transition-colors hover:text-white">
+          <div className="mt-6 text-sm">
+            <a href={`mailto:${siteConfig.email}`} className="block py-2 transition-colors hover:text-white lg:py-0.5">
               {siteConfig.email}
             </a>
-            <a href={`tel:${siteConfig.phone.replace(/\s/g, '')}`} className="block transition-colors hover:text-white" dir="ltr">
+            <a href={`tel:${siteConfig.phone.replace(/\s/g, '')}`} className="block py-2 transition-colors hover:text-white lg:py-0.5" dir="ltr">
               {siteConfig.phone}
             </a>
           </div>
@@ -74,7 +74,7 @@ function FooterColumn({ title, children }: { title: string; children: React.Reac
   return (
     <div>
       <h2 className="text-xs font-medium uppercase tracking-[0.24em] text-mist-500">{title}</h2>
-      <ul className="mt-5 space-y-3 text-sm">{children}</ul>
+      <ul className="mt-4 space-y-1 text-sm lg:mt-5 lg:space-y-3">{children}</ul>
     </div>
   );
 }
@@ -82,7 +82,7 @@ function FooterColumn({ title, children }: { title: string; children: React.Reac
 function FooterLink({ href, label }: { href: string; label: string }) {
   return (
     <li>
-      <Link href={href} className="transition-colors hover:text-white">
+      <Link href={href} className="inline-block py-2 transition-colors hover:text-white lg:py-0">
         {label}
       </Link>
     </li>

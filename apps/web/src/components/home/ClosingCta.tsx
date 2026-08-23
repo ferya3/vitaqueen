@@ -13,7 +13,7 @@ export async function ClosingCta({ locale }: { locale: Locale }) {
       <WaterBackdrop variant="line" />
       <div aria-hidden className="absolute inset-0 bg-abyss-950/55" />
       <div className="shell relative z-10 flex flex-col items-start gap-8 py-28 sm:py-36">
-        <TextReveal as="h2" className="max-w-2xl font-display text-5xl leading-[1.05] text-white">
+        <TextReveal as="h2" className="max-w-2xl font-display text-5xl leading-(--leading-display) text-white">
           {t('title')}
         </TextReveal>
         <p className="max-w-xl text-lg leading-relaxed text-mist-300">{t('body')}</p>

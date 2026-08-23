@@ -96,7 +96,7 @@ export function JourneySequence() {
               )}
             >
               <div className="flex items-baseline gap-5">
-                <span className="font-display text-6xl text-white/10 tabular lg:text-8xl">
+                <span className="font-display text-5xl text-white/10 tabular lg:text-6xl">
                   {String(index + 1).padStart(2, '0')}
                 </span>
                 <h3 className="font-display text-3xl text-white lg:text-5xl">

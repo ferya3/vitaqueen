@@ -111,7 +111,7 @@ export function Header() {
             <button
               type="button"
               onClick={() => setMenuOpen(true)}
-              className="inline-flex items-center gap-2 rounded-pill border border-white/15 px-4 py-2 text-sm text-mist-200 transition-colors hover:border-white/40 hover:text-white xl:hidden"
+              className="inline-flex min-h-11 items-center gap-2 rounded-pill border border-white/15 px-4 py-2 text-sm text-mist-200 transition-colors hover:border-white/40 hover:text-white xl:hidden"
               aria-haspopup="dialog"
             >
               <span className="flex flex-col gap-1" aria-hidden>

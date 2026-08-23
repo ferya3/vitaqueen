@@ -52,7 +52,7 @@ export function Hero({ backdrop = 'spring', scene = false, className }: HeroProp
               <Eyebrow tone="light">{t('eyebrow')}</Eyebrow>
             </div>
 
-            <h1 className="mt-7 font-display text-hero leading-[0.92] tracking-tight">
+            <h1 className="mt-7 font-display text-hero leading-(--leading-display) tracking-tight">
               <span data-hero-line className="block overflow-hidden">
                 {t('line1')}
               </span>
