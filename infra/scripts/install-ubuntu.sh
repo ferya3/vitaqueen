@@ -19,11 +19,13 @@ REPO_BRANCH="${REPO_BRANCH:-claude/mineral-water-factory-site-q39765}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/vitaqueen}"
 DB_NAME="${DB_NAME:-vitaqueen}"
 DB_USER="${DB_USER:-vitaqueen_app}"
-# 8.4 is preferred but not required: composer.json asks for ^8.3, and Ubuntu
-# 24.04 ships 8.3 in its own archive. Both are resolved at runtime, so a server
-# that cannot reach Launchpad still gets a working install.
-PHP_PREFERRED="8.4"
-PHP_FALLBACK="8.3"
+# 8.4 is preferred but not required. composer.lock is resolved against PHP
+# 8.3 (see the `config.platform` pin in apps/api/composer.json), so the same
+# lock installs on Ubuntu 24.04's own 8.3 and on 8.4 from the PPA. Both are
+# resolved at runtime, so a server that cannot reach Launchpad still gets a
+# working install.
+PHP_PREFERRED="${PHP_PREFERRED:-8.4}"
+PHP_FALLBACK="${PHP_FALLBACK:-8.3}"
 PHP_VERSION=""
 PHP_BIN=""
 NODE_MAJOR="22"
@@ -89,7 +91,17 @@ fi
 
 export DEBIAN_FRONTEND=noninteractive
 # Never let a slow mirror turn into an install that appears to have died.
-APT_OPTS=(-o "Acquire::http::Timeout=25" -o "Acquire::https::Timeout=25" -o "Acquire::Retries=2")
+# `ForceIPv4` and a pipeline depth of zero are the standard remedy for
+# "Could not wait for server fd - select (11: Resource temporarily
+# unavailable)", which is what a host with a broken IPv6 route or an
+# unhappy proxy returns instead of a download.
+APT_OPTS=(
+  -o "Acquire::http::Timeout=25"
+  -o "Acquire::https::Timeout=25"
+  -o "Acquire::Retries=2"
+  -o "Acquire::ForceIPv4=true"
+  -o "Acquire::http::Pipeline-Depth=0"
+)
 
 # --- System packages --------------------------------------------------------
 
@@ -157,6 +169,12 @@ php_packages() {
 use_php() {
   PHP_VERSION="$1"
   PHP_BIN="php$1"
+
+  # Fail here with a sentence rather than three steps later with composer's
+  # "Your lock file does not contain a compatible set of packages".
+  "$PHP_BIN" -r 'exit(PHP_VERSION_ID >= 80300 ? 0 : 1);' \
+    || die "PHP ${PHP_VERSION} is too old; this project needs 8.3 or newer."
+
   info "$("$PHP_BIN" -v | head -1)"
 }
 
@@ -186,7 +204,7 @@ install_php() {
   # TLS handshake to ppa.launchpadcontent.net — that treating it as a hard
   # dependency would strand installs over a version this project does not
   # actually require.
-  warn "PHP ${PHP_PREFERRED} is not reachable (Launchpad). Falling back to Ubuntu's PHP ${PHP_FALLBACK}, which satisfies composer.json's ^8.3."
+  warn "PHP ${PHP_PREFERRED} is not reachable (Launchpad). Falling back to Ubuntu's PHP ${PHP_FALLBACK}, which the lock file is resolved against."
 
   # Park the unusable source rather than deleting it: `apt-get update` stops
   # failing, and the change is obvious and reversible.
