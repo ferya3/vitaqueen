@@ -19,8 +19,13 @@ REPO_BRANCH="${REPO_BRANCH:-claude/mineral-water-factory-site-q39765}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/vitaqueen}"
 DB_NAME="${DB_NAME:-vitaqueen}"
 DB_USER="${DB_USER:-vitaqueen_app}"
-PHP_VERSION="8.4"
-PHP_BIN="php8.4"
+# 8.4 is preferred but not required: composer.json asks for ^8.3, and Ubuntu
+# 24.04 ships 8.3 in its own archive. Both are resolved at runtime, so a server
+# that cannot reach Launchpad still gets a working install.
+PHP_PREFERRED="8.4"
+PHP_FALLBACK="8.3"
+PHP_VERSION=""
+PHP_BIN=""
 NODE_MAJOR="22"
 
 # Signing key for ppa:ondrej/php — "Launchpad PPA for Ondřej Surý". Pinned so
@@ -78,12 +83,14 @@ else
 fi
 
 export DEBIAN_FRONTEND=noninteractive
+# Never let a slow mirror turn into an install that appears to have died.
+APT_OPTS=(-o "Acquire::http::Timeout=25" -o "Acquire::https::Timeout=25" -o "Acquire::Retries=2")
 
 # --- System packages --------------------------------------------------------
 
 step "Base packages"
-$SUDO apt-get update -qq
-$SUDO apt-get install -y -qq \
+$SUDO apt-get "${APT_OPTS[@]}" update -qq
+$SUDO apt-get "${APT_OPTS[@]}" install -y -qq \
   ca-certificates curl git gnupg unzip openssl lsb-release software-properties-common
 
 # Ubuntu 24.04 ships PHP 8.3; 8.4 comes from Ondřej Surý's archive.
@@ -99,16 +106,19 @@ add_php_ppa() {
     return 0
   fi
 
+  # Bounded and noisy on purpose. Left to itself `add-apt-repository` can sit on
+  # an unresponsive Launchpad API for minutes with nothing on screen, which is
+  # indistinguishable from a hung install.
   local attempt
   for attempt in 1 2 3; do
-    if $SUDO add-apt-repository -y ppa:ondrej/php >/dev/null 2>&1; then
+    info "Asking Launchpad for the PHP archive (attempt ${attempt}/3, 60s limit)…"
+    if $SUDO timeout 60 add-apt-repository -y ppa:ondrej/php >/dev/null 2>&1; then
       return 0
     fi
-    warn "Launchpad did not hand over the signing key (attempt ${attempt}/3); retrying in $((attempt * 10))s."
-    sleep $((attempt * 10))
+    [[ "$attempt" -lt 3 ]] && sleep 5
   done
 
-  warn "Launchpad API still failing; adding the archive directly from the keyserver."
+  warn "Launchpad is not answering. Adding the archive directly from the keyserver instead."
 
   local codename keyring tmpkey
   # shellcheck source=/dev/null
@@ -133,18 +143,62 @@ add_php_ppa() {
     | $SUDO tee /etc/apt/sources.list.d/ondrej-php.list >/dev/null
 }
 
-step "PHP ${PHP_VERSION}"
-if ! command -v "php${PHP_VERSION}" >/dev/null; then
-  add_php_ppa
-  $SUDO apt-get update -qq
-fi
-$SUDO apt-get install -y -qq \
-  "php${PHP_VERSION}-cli" "php${PHP_VERSION}-fpm" \
-  "php${PHP_VERSION}-mbstring" "php${PHP_VERSION}-xml" "php${PHP_VERSION}-curl" \
-  "php${PHP_VERSION}-zip" "php${PHP_VERSION}-intl" "php${PHP_VERSION}-bcmath" \
-  "php${PHP_VERSION}-gd" "php${PHP_VERSION}-mysql" "php${PHP_VERSION}-redis" \
-  "php${PHP_VERSION}-sqlite3"
-info "$("$PHP_BIN" -v | head -1)"
+php_packages() {
+  local v="$1"
+  printf 'php%s-cli php%s-fpm php%s-mbstring php%s-xml php%s-curl php%s-zip php%s-intl php%s-bcmath php%s-gd php%s-mysql php%s-redis php%s-sqlite3' \
+    "$v" "$v" "$v" "$v" "$v" "$v" "$v" "$v" "$v" "$v" "$v" "$v"
+}
+
+use_php() {
+  PHP_VERSION="$1"
+  PHP_BIN="php$1"
+  info "$("$PHP_BIN" -v | head -1)"
+}
+
+install_php() {
+  local v pkgs f
+
+  # Something suitable already present?
+  for v in "$PHP_PREFERRED" "$PHP_FALLBACK"; do
+    if command -v "php${v}" >/dev/null; then
+      use_php "$v"
+      return 0
+    fi
+  done
+
+  info "Installing PHP and its extensions takes a couple of minutes."
+
+  # First choice: 8.4 from Ondřej Surý's archive.
+  read -r -a pkgs <<< "$(php_packages "$PHP_PREFERRED")"
+  if add_php_ppa \
+    && $SUDO apt-get "${APT_OPTS[@]}" update -qq 2>/dev/null \
+    && $SUDO apt-get "${APT_OPTS[@]}" install -y -qq "${pkgs[@]}" 2>/dev/null; then
+    use_php "$PHP_PREFERRED"
+    return 0
+  fi
+
+  # Launchpad is unreachable often enough — a 500 from its key API, a stalled
+  # TLS handshake to ppa.launchpadcontent.net — that treating it as a hard
+  # dependency would strand installs over a version this project does not
+  # actually require.
+  warn "PHP ${PHP_PREFERRED} is not reachable (Launchpad). Falling back to Ubuntu's PHP ${PHP_FALLBACK}, which satisfies composer.json's ^8.3."
+
+  # Park the unusable source rather than deleting it: `apt-get update` stops
+  # failing, and the change is obvious and reversible.
+  for f in /etc/apt/sources.list.d/*ondrej*php*; do
+    [[ -e "$f" ]] || continue
+    $SUDO mv "$f" "${f}.disabled"
+    warn "Disabled ${f} — rename it back once Launchpad is reachable again."
+  done
+
+  read -r -a pkgs <<< "$(php_packages "$PHP_FALLBACK")"
+  $SUDO apt-get "${APT_OPTS[@]}" update -qq
+  $SUDO apt-get "${APT_OPTS[@]}" install -y -qq "${pkgs[@]}"
+  use_php "$PHP_FALLBACK"
+}
+
+step "PHP"
+install_php
 
 step "Composer"
 if ! command -v composer >/dev/null; then
@@ -162,12 +216,13 @@ info "$("$PHP_BIN" "$(command -v composer)" --version 2>/dev/null)"
 step "Node ${NODE_MAJOR}"
 if ! command -v node >/dev/null || [[ "$(node -v | cut -c2- | cut -d. -f1)" -lt "$NODE_MAJOR" ]]; then
   curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | $SUDO -E bash - >/dev/null
-  $SUDO apt-get install -y -qq nodejs
+  $SUDO apt-get "${APT_OPTS[@]}" install -y -qq nodejs
 fi
 info "node $(node -v), npm $(npm -v)"
 
 step "MySQL and Redis"
-$SUDO apt-get install -y -qq mysql-server redis-server
+info "MySQL is the slowest package here; give it a minute."
+$SUDO apt-get "${APT_OPTS[@]}" install -y -qq mysql-server redis-server
 $SUDO systemctl enable --now mysql redis-server >/dev/null 2>&1 || true
 
 # --- Database ---------------------------------------------------------------
@@ -205,6 +260,7 @@ INTERNAL_TOKEN="$(openssl rand -hex 32)"
 
 step "API"
 cd "$INSTALL_DIR/apps/api"
+info "Installing PHP dependencies."
 "$PHP_BIN" "$(command -v composer)" install --no-interaction --prefer-dist --quiet
 
 if [[ ! -f .env ]]; then
@@ -233,7 +289,8 @@ fi
 
 step "Front end"
 cd "$INSTALL_DIR/apps/web"
-npm ci --no-audit --no-fund --silent
+info "Installing front-end dependencies (~450 packages)."
+npm ci --no-audit --no-fund --no-progress
 
 if [[ ! -f .env.local ]]; then
   cp .env.example .env.local
@@ -253,6 +310,8 @@ npm run build
 
 step "Done"
 cat <<EOF
+
+  ${BOLD}Running PHP ${PHP_VERSION}${RESET}
 
   ${BOLD}Start it${RESET}
     cd ${INSTALL_DIR}/apps/api && ${PHP_BIN} artisan serve   ${DIM}# http://127.0.0.1:8000${RESET}
