@@ -26,7 +26,28 @@ docs/        architecture, design system, motion map, security, API reference
   TOTP second factor, role-based policies, an append-only audit log, upload
   hardening, layered rate limits and enforced data retention.
 
-## Quick start
+## Install on Ubuntu 24.04
+
+One line. Installs PHP 8.4, Node 22, Composer, MySQL and Redis, creates a
+least-privileged database user, clones the repository, wires both `.env` files
+to each other, migrates, seeds and builds:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ferya3/vitaqueen/claude/mineral-water-factory-site-q39765/infra/scripts/install-ubuntu.sh | bash
+```
+
+If the repository is private, clone first and run the script from disk:
+
+```bash
+git clone -b claude/mineral-water-factory-site-q39765 https://github.com/ferya3/vitaqueen.git && bash vitaqueen/infra/scripts/install-ubuntu.sh
+```
+
+It is idempotent — re-running never overwrites an existing `.env`. Run it as a
+normal user with sudo, not as root. It deliberately does not touch nginx, TLS or
+Cloudflare; those are deployment decisions, covered in
+[docs/security.md](docs/security.md).
+
+## Quick start (manual)
 
 ```bash
 # Services (MySQL, Redis, Mailpit)
