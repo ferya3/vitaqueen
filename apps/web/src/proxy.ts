@@ -30,7 +30,7 @@ function negotiateLocale(header: string | null): Locale {
   return defaultLocale;
 }
 
-function buildContentSecurityPolicy(nonce: string, isDev: boolean) {
+function buildContentSecurityPolicy(nonce: string, isDev: boolean, isSecure: boolean) {
   return [
     `default-src 'self'`,
     // `strict-dynamic` lets the Next bootstrap load its own chunks while
@@ -52,7 +52,12 @@ function buildContentSecurityPolicy(nonce: string, isDev: boolean) {
     `base-uri 'self'`,
     `object-src 'none'`,
     `manifest-src 'self'`,
-    ...(isDev ? [] : ['upgrade-insecure-requests']),
+    // Only when the page itself arrived over TLS. On a plain-HTTP origin this
+    // directive rewrites every stylesheet, script and font request to https://
+    // — and if nothing is listening for TLS on that port, the page renders
+    // with no styles at all and no error that explains why. It protects an
+    // https page; on an http one it is purely destructive.
+    ...(isSecure && !isDev ? ['upgrade-insecure-requests'] : []),
   ]
     .join('; ')
     .replace(/\s{2,}/g, ' ')
@@ -87,8 +92,15 @@ export default function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const isDev = process.env.NODE_ENV === 'development';
 
+  // `x-forwarded-proto` is what nginx and Cloudflare set; `nextUrl.protocol`
+  // covers a direct TLS connection to the Node server.
+  const forwardedProto = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim();
+  const isSecure = forwardedProto
+    ? forwardedProto === 'https'
+    : request.nextUrl.protocol === 'https:';
+
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
-  const csp = buildContentSecurityPolicy(nonce, isDev);
+  const csp = buildContentSecurityPolicy(nonce, isDev, isSecure);
 
   const hasLocale = locales.some(
     (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),

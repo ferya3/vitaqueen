@@ -34,7 +34,7 @@ img-src     'self' data: blob:;
 font-src    'self';
 connect-src 'self';
 frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self';
-upgrade-insecure-requests
+upgrade-insecure-requests        ← only when the request arrived over TLS
 ```
 
 Three notes:
@@ -46,6 +46,12 @@ Three notes:
   those.
 - **`connect-src 'self'`** is possible because the browser never calls the API —
   the API origin is not even in the client bundle.
+- **`upgrade-insecure-requests` is conditional.** It is emitted only when
+  `x-forwarded-proto` (nginx, Cloudflare) or the connection itself says https.
+  On a plain-HTTP origin it rewrites every stylesheet, script and font request
+  to `https://`, and if nothing is listening for TLS on that port the page
+  renders unstyled with no error that explains why. It protects an https page;
+  on an http one it only breaks things.
 
 Getting a real nonce is the reason locale routing is hand-written rather than
 delegated. Owning the response is the only way to rewrite the request headers
