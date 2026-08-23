@@ -147,17 +147,17 @@
    One number moves the entire scale below the `sm` breakpoint — every step,
    from the hero down to the smallest label, is multiplied by it.
 
-   It is set to 0.5 on request: the phone is deliberately set at half the size
-   the rest of the system uses. That puts body copy at 8px and the smallest
-   labels near 5px, which is below what any mobile platform or WCAG considers
-   readable, so if the site needs to be legible on a phone this is the number
-   to raise — 0.8 keeps the reduction obvious while leaving body copy at 13px.
-   Nothing else has to change.
+   It is set to 0.65 on request: the phone is deliberately set at roughly two
+   thirds of the size the rest of the system uses. That puts body copy at 10px
+   and the smallest labels near 7px — still under what mobile platforms and
+   WCAG treat as readable, so this is the number to raise if the site needs to
+   be legible on a phone. Nothing else has to change: 0.8 leaves body copy at
+   13px, 1 removes the reduction entirely.
    ========================================================================== */
 
 @media (width < 40rem) {
   :root {
-    --type-scale: 0.5;
+    --type-scale: 0.65;
   }
 }
 
