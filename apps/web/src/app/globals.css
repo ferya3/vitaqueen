@@ -89,8 +89,11 @@
      Below `--text-xl` the sizes are fixed: body copy that grows with the
      viewport is a readability problem, not a feature. 16px stays 16px.
 
-     Every step is multiplied by `--type-scale`, so the whole system moves with
-     one number — see the phone override further down. */
+     Every step is multiplied by `--type-scale`, so the whole system can be
+     moved with one number. It is 1 — the scale above is the scale that ships.
+     Redefining it inside a media query shrinks or grows every step at once,
+     which is the only supported way to do that: half a scale is a scale, a
+     handful of hand-picked overrides is not. */
   --type-scale: 1;
 
   --text-2xs: calc(0.6875rem * var(--type-scale));
@@ -139,26 +142,6 @@
   --container-shell: 88rem;
   --spacing-gutter: clamp(1.25rem, 4vw, 4.5rem);
   --spacing-section: clamp(5rem, 11vw, 11rem);
-}
-
-/* ==========================================================================
-   Phone type scale
-   --------------------------------------------------------------------------
-   One number moves the entire scale below the `sm` breakpoint — every step,
-   from the hero down to the smallest label, is multiplied by it.
-
-   It is set to 0.65 on request: the phone is deliberately set at roughly two
-   thirds of the size the rest of the system uses. That puts body copy at 10px
-   and the smallest labels near 7px — still under what mobile platforms and
-   WCAG treat as readable, so this is the number to raise if the site needs to
-   be legible on a phone. Nothing else has to change: 0.8 leaves body copy at
-   13px, 1 removes the reduction entirely.
-   ========================================================================== */
-
-@media (width < 40rem) {
-  :root {
-    --type-scale: 0.65;
-  }
 }
 
 /* ==========================================================================
