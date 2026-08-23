@@ -103,6 +103,69 @@ APT_OPTS=(
   -o "Acquire::http::Pipeline-Depth=0"
 )
 
+# --- Memory -----------------------------------------------------------------
+
+# `next build` peaks well above a gigabyte. On a small VPS with no swap the
+# kernel does not slow it down — it kills it, and all you see is the word
+# "Killed" with no explanation. Cheap disk-backed swap turns that into a build
+# that is merely slower.
+SWAP_TARGET_MB="${SWAP_TARGET_MB:-4096}"
+
+memory_total_mb() {
+  awk '/^MemTotal:|^SwapTotal:/ {sum += $2} END {print int(sum / 1024)}' /proc/meminfo
+}
+
+ensure_swap() {
+  local ram_mb swap_mb total_mb add_mb free_disk_mb
+
+  ram_mb=$(awk '/^MemTotal:/ {print int($2 / 1024)}' /proc/meminfo)
+  swap_mb=$(awk '/^SwapTotal:/ {print int($2 / 1024)}' /proc/meminfo)
+  total_mb=$(( ram_mb + swap_mb ))
+
+  info "${ram_mb} MB RAM, ${swap_mb} MB swap."
+
+  if (( total_mb >= SWAP_TARGET_MB )); then
+    return 0
+  fi
+
+  if [[ -e /swapfile ]]; then
+    warn "/swapfile already exists but is not active; leaving it alone. Enable it with: swapon /swapfile"
+    return 0
+  fi
+
+  add_mb=$(( SWAP_TARGET_MB - total_mb ))
+  (( add_mb < 1024 )) && add_mb=1024
+
+  # Leave headroom: node_modules, vendor and the build output want a couple of
+  # gigabytes of their own.
+  free_disk_mb=$(df -Pm / | awk 'NR == 2 {print $4}')
+  if (( free_disk_mb < add_mb + 3072 )); then
+    warn "Only ${free_disk_mb} MB free on /; not creating a swapfile. The front-end build may be killed."
+    return 0
+  fi
+
+  info "Adding ${add_mb} MB of swap so the production build is not killed."
+
+  "${SUDO[@]}" fallocate -l "${add_mb}M" /swapfile 2>/dev/null \
+    || "${SUDO[@]}" dd if=/dev/zero of=/swapfile bs=1M count="$add_mb" status=none
+  "${SUDO[@]}" chmod 600 /swapfile
+  "${SUDO[@]}" mkswap /swapfile >/dev/null
+
+  # Containers without swap accounting refuse this. It is not fatal; the build
+  # simply has less room, and the message below says what to do about it.
+  if ! "${SUDO[@]}" swapon /swapfile 2>/dev/null; then
+    warn "This host does not allow swap (a container without swap support?). Continuing without it."
+    "${SUDO[@]}" rm -f /swapfile
+    return 0
+  fi
+
+  grep -q '^/swapfile ' /etc/fstab 2>/dev/null \
+    || echo '/swapfile none swap sw 0 0' | "${SUDO[@]}" tee -a /etc/fstab >/dev/null
+}
+
+step "Memory"
+ensure_swap
+
 # --- System packages --------------------------------------------------------
 
 step "Base packages"
@@ -246,7 +309,34 @@ info "node $(node -v), npm $(npm -v)"
 step "MySQL and Redis"
 info "MySQL is the slowest package here; give it a minute."
 "${SUDO[@]}" apt-get "${APT_OPTS[@]}" install -y -qq mysql-server redis-server
-"${SUDO[@]}" systemctl enable --now mysql redis-server >/dev/null 2>&1 || true
+
+# `systemctl` is not available everywhere a VPS image claims to be Ubuntu
+# (LXC containers, minimal images), so fall back to the init script.
+start_service() {
+  "${SUDO[@]}" systemctl enable --now "$1" >/dev/null 2>&1 && return 0
+  "${SUDO[@]}" service "$1" start >/dev/null 2>&1 && return 0
+  return 1
+}
+
+start_service mysql || warn "Could not start MySQL through systemd or init."
+start_service redis-server || warn "Could not start Redis through systemd or init."
+
+# `--now` returns before mysqld is ready to accept connections, and the next
+# step would then fail with a bare socket error that says nothing about why.
+info "Waiting for MySQL to accept connections."
+for attempt in $(seq 1 30); do
+  if "${SUDO[@]}" mysqladmin ping >/dev/null 2>&1; then
+    break
+  fi
+  if (( attempt == 30 )); then
+    die "MySQL is installed but is not accepting connections after 60 seconds.
+
+    Check it with:
+      systemctl status mysql
+      tail -50 /var/log/mysql/error.log"
+  fi
+  sleep 2
+done
 
 # --- Database ---------------------------------------------------------------
 
@@ -360,7 +450,38 @@ else
   warn "apps/web/.env.local exists — left untouched."
 fi
 
-npm run build
+# Cap the heap at three quarters of what the machine actually has, so V8 starts
+# collecting instead of growing until the kernel intervenes.
+BUILD_HEAP_MB=$(( $(memory_total_mb) * 3 / 4 ))
+(( BUILD_HEAP_MB > 4096 )) && BUILD_HEAP_MB=4096
+(( BUILD_HEAP_MB < 1024 )) && BUILD_HEAP_MB=1024
+export NODE_OPTIONS="--max-old-space-size=${BUILD_HEAP_MB}"
+info "Building with a ${BUILD_HEAP_MB} MB heap ceiling."
+
+build_log="$(mktemp)"
+if npm run build 2>&1 | tee "$build_log"; then
+  rm -f "$build_log"
+else
+  status=${PIPESTATUS[0]}
+
+  # An OOM kill leaves no error of its own: the process is simply gone, and all
+  # the terminal shows is the word "Killed". Name it, because nobody guesses it.
+  if (( status == 137 )) || grep -qE 'Killed|JavaScript heap out of memory|SIGKILL' "$build_log"; then
+    rm -f "$build_log"
+    die "The production build ran out of memory (exit ${status}).
+
+    This machine has $(memory_total_mb) MB of RAM and swap combined. Add swap
+    and re-run this script:
+
+      fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+      echo '/swapfile none swap sw 0 0' >> /etc/fstab
+
+    Or build on a machine with more memory and copy apps/web/.next across."
+  fi
+
+  rm -f "$build_log"
+  die "The production build failed (exit ${status}). The output above says why."
+fi
 
 # --- Done -------------------------------------------------------------------
 
