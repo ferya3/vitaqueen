@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# …and the template is opted in: the installer copies it to .env.local, and a
+# repository that ignores its own example file cannot be set up from a clone.
+!.env.example
 
 # vercel
 .vercel

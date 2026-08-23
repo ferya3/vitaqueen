@@ -70,10 +70,15 @@ if [[ "$(id -u)" -eq 0 ]]; then
   warn "Running as root (ALLOW_ROOT=1). Everything this writes will be root-owned."
   # Composer bails out under root unless this is set, and silently skips plugins.
   export COMPOSER_ALLOW_SUPERUSER=1
-  SUDO=""
+  # Arrays, not strings: an empty array expands to nothing, whereas an empty
+  # string leaves the next word to be parsed as the command — which is how
+  # `$SUDO -E bash` became a shell looking for a program called `-E`.
+  SUDO=()
+  SUDO_E=()
 else
   command -v sudo >/dev/null || die "sudo is required when not running as root."
-  SUDO="sudo"
+  SUDO=(sudo)
+  SUDO_E=(sudo -E)
   sudo -v || die "sudo authentication failed."
 
   # Keep the sudo timestamp alive for the length of the run.
@@ -89,8 +94,8 @@ APT_OPTS=(-o "Acquire::http::Timeout=25" -o "Acquire::https::Timeout=25" -o "Acq
 # --- System packages --------------------------------------------------------
 
 step "Base packages"
-$SUDO apt-get "${APT_OPTS[@]}" update -qq
-$SUDO apt-get "${APT_OPTS[@]}" install -y -qq \
+"${SUDO[@]}" apt-get "${APT_OPTS[@]}" update -qq
+"${SUDO[@]}" apt-get "${APT_OPTS[@]}" install -y -qq \
   ca-certificates curl git gnupg unzip openssl lsb-release software-properties-common
 
 # Ubuntu 24.04 ships PHP 8.3; 8.4 comes from Ondřej Surý's archive.
@@ -112,7 +117,7 @@ add_php_ppa() {
   local attempt
   for attempt in 1 2 3; do
     info "Asking Launchpad for the PHP archive (attempt ${attempt}/3, 60s limit)…"
-    if $SUDO timeout 60 add-apt-repository -y ppa:ondrej/php >/dev/null 2>&1; then
+    if "${SUDO[@]}" timeout 60 add-apt-repository -y ppa:ondrej/php >/dev/null 2>&1; then
       return 0
     fi
     [[ "$attempt" -lt 3 ]] && sleep 5
@@ -135,12 +140,12 @@ add_php_ppa() {
   gpg --show-keys --with-colons "$tmpkey" 2>/dev/null | grep -q "^fpr:*${ONDREJ_PHP_KEY}:" \
     || { rm -f "$tmpkey"; die "PHP archive key fingerprint mismatch — refusing to trust it."; }
 
-  $SUDO install -d -m 0755 /etc/apt/keyrings
-  gpg --dearmor < "$tmpkey" | $SUDO tee "$keyring" >/dev/null
+  "${SUDO[@]}" install -d -m 0755 /etc/apt/keyrings
+  gpg --dearmor < "$tmpkey" | "${SUDO[@]}" tee "$keyring" >/dev/null
   rm -f "$tmpkey"
 
   echo "deb [signed-by=${keyring}] https://ppa.launchpadcontent.net/ondrej/php/ubuntu ${codename} main" \
-    | $SUDO tee /etc/apt/sources.list.d/ondrej-php.list >/dev/null
+    | "${SUDO[@]}" tee /etc/apt/sources.list.d/ondrej-php.list >/dev/null
 }
 
 php_packages() {
@@ -171,8 +176,8 @@ install_php() {
   # First choice: 8.4 from Ondřej Surý's archive.
   read -r -a pkgs <<< "$(php_packages "$PHP_PREFERRED")"
   if add_php_ppa \
-    && $SUDO apt-get "${APT_OPTS[@]}" update -qq 2>/dev/null \
-    && $SUDO apt-get "${APT_OPTS[@]}" install -y -qq "${pkgs[@]}" 2>/dev/null; then
+    && "${SUDO[@]}" apt-get "${APT_OPTS[@]}" update -qq 2>/dev/null \
+    && "${SUDO[@]}" apt-get "${APT_OPTS[@]}" install -y -qq "${pkgs[@]}" 2>/dev/null; then
     use_php "$PHP_PREFERRED"
     return 0
   fi
@@ -187,13 +192,13 @@ install_php() {
   # failing, and the change is obvious and reversible.
   for f in /etc/apt/sources.list.d/*ondrej*php*; do
     [[ -e "$f" ]] || continue
-    $SUDO mv "$f" "${f}.disabled"
+    "${SUDO[@]}" mv "$f" "${f}.disabled"
     warn "Disabled ${f} — rename it back once Launchpad is reachable again."
   done
 
   read -r -a pkgs <<< "$(php_packages "$PHP_FALLBACK")"
-  $SUDO apt-get "${APT_OPTS[@]}" update -qq
-  $SUDO apt-get "${APT_OPTS[@]}" install -y -qq "${pkgs[@]}"
+  "${SUDO[@]}" apt-get "${APT_OPTS[@]}" update -qq
+  "${SUDO[@]}" apt-get "${APT_OPTS[@]}" install -y -qq "${pkgs[@]}"
   use_php "$PHP_FALLBACK"
 }
 
@@ -208,33 +213,33 @@ if ! command -v composer >/dev/null; then
   # The installer is fetched over the network and then run as PHP. Verifying it
   # against the published signature is the whole reason this is four lines.
   [[ "$EXPECTED" == "$ACTUAL" ]] || die "Composer installer checksum mismatch — refusing to run it."
-  $SUDO "$PHP_BIN" /tmp/composer-setup.php --quiet --install-dir=/usr/local/bin --filename=composer
+  "${SUDO[@]}" "$PHP_BIN" /tmp/composer-setup.php --quiet --install-dir=/usr/local/bin --filename=composer
   rm -f /tmp/composer-setup.php
 fi
 info "$("$PHP_BIN" "$(command -v composer)" --version 2>/dev/null)"
 
 step "Node ${NODE_MAJOR}"
 if ! command -v node >/dev/null || [[ "$(node -v | cut -c2- | cut -d. -f1)" -lt "$NODE_MAJOR" ]]; then
-  curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | $SUDO -E bash - >/dev/null
-  $SUDO apt-get "${APT_OPTS[@]}" install -y -qq nodejs
+  curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | "${SUDO_E[@]}" bash - >/dev/null
+  "${SUDO[@]}" apt-get "${APT_OPTS[@]}" install -y -qq nodejs
 fi
 info "node $(node -v), npm $(npm -v)"
 
 step "MySQL and Redis"
 info "MySQL is the slowest package here; give it a minute."
-$SUDO apt-get "${APT_OPTS[@]}" install -y -qq mysql-server redis-server
-$SUDO systemctl enable --now mysql redis-server >/dev/null 2>&1 || true
+"${SUDO[@]}" apt-get "${APT_OPTS[@]}" install -y -qq mysql-server redis-server
+"${SUDO[@]}" systemctl enable --now mysql redis-server >/dev/null 2>&1 || true
 
 # --- Database ---------------------------------------------------------------
 
 step "Database"
 DB_PASSWORD="$(openssl rand -base64 24 | tr -d '/+=' | head -c 28)"
-if $SUDO mysql -N -e "SELECT 1 FROM mysql.user WHERE user='${DB_USER}'" | grep -q 1; then
+if "${SUDO[@]}" mysql -N -e "SELECT 1 FROM mysql.user WHERE user='${DB_USER}'" | grep -q 1; then
   info "User ${DB_USER} already exists; leaving its password alone."
   DB_PASSWORD=""
 else
   # Grants are limited to this one schema. The application never connects as root.
-  $SUDO mysql <<SQL
+  "${SUDO[@]}" mysql <<SQL
 CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';
 GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, REFERENCES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';
