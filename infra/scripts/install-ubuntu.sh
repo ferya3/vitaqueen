@@ -23,6 +23,10 @@ PHP_VERSION="8.4"
 PHP_BIN="php8.4"
 NODE_MAJOR="22"
 
+# Signing key for ppa:ondrej/php — "Launchpad PPA for Ondřej Surý". Pinned so
+# the manual fallback below cannot be talked into trusting a different key.
+ONDREJ_PHP_KEY="B8DC7E53946656EFBCE4C1DD71DAEAAB4AD4CAB6"
+
 BOLD=$'\e[1m'; DIM=$'\e[2m'; GREEN=$'\e[32m'; YELLOW=$'\e[33m'; RED=$'\e[31m'; RESET=$'\e[0m'
 step()  { printf '\n%s==>%s %s%s%s\n' "$GREEN" "$RESET" "$BOLD" "$1" "$RESET"; }
 info()  { printf '%s    %s%s\n' "$DIM" "$1" "$RESET"; }
@@ -82,10 +86,56 @@ $SUDO apt-get update -qq
 $SUDO apt-get install -y -qq \
   ca-certificates curl git gnupg unzip openssl lsb-release software-properties-common
 
-step "PHP ${PHP_VERSION}"
 # Ubuntu 24.04 ships PHP 8.3; 8.4 comes from Ondřej Surý's archive.
+#
+# `add-apt-repository` fetches the PPA's signing key through the Launchpad API,
+# which returns `500 GPGKeyTemporarilyNotFoundError` during Launchpad
+# incidents. That is exactly as temporary as it sounds, so retry — and if the
+# API stays down, add the repository by hand using the same key from the Ubuntu
+# keyserver, pinned by fingerprint.
+add_php_ppa() {
+  if compgen -G "/etc/apt/sources.list.d/*ondrej*php*" >/dev/null 2>&1; then
+    info "PHP archive already configured."
+    return 0
+  fi
+
+  local attempt
+  for attempt in 1 2 3; do
+    if $SUDO add-apt-repository -y ppa:ondrej/php >/dev/null 2>&1; then
+      return 0
+    fi
+    warn "Launchpad did not hand over the signing key (attempt ${attempt}/3); retrying in $((attempt * 10))s."
+    sleep $((attempt * 10))
+  done
+
+  warn "Launchpad API still failing; adding the archive directly from the keyserver."
+
+  local codename keyring tmpkey
+  # shellcheck source=/dev/null
+  codename="$(. /etc/os-release && echo "$VERSION_CODENAME")"
+  keyring="/etc/apt/keyrings/ondrej-php.gpg"
+  tmpkey="$(mktemp)"
+
+  curl -fsSL --retry 3 --retry-delay 3 \
+    "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x${ONDREJ_PHP_KEY}" -o "$tmpkey" \
+    || die "Could not reach the Ubuntu keyserver either. Check outbound HTTPS and try again."
+
+  # Verify before trusting: a keyserver returns whatever it is given, and the
+  # whole point of pinning a fingerprint is to check it.
+  gpg --show-keys --with-colons "$tmpkey" 2>/dev/null | grep -q "^fpr:*${ONDREJ_PHP_KEY}:" \
+    || { rm -f "$tmpkey"; die "PHP archive key fingerprint mismatch — refusing to trust it."; }
+
+  $SUDO install -d -m 0755 /etc/apt/keyrings
+  gpg --dearmor < "$tmpkey" | $SUDO tee "$keyring" >/dev/null
+  rm -f "$tmpkey"
+
+  echo "deb [signed-by=${keyring}] https://ppa.launchpadcontent.net/ondrej/php/ubuntu ${codename} main" \
+    | $SUDO tee /etc/apt/sources.list.d/ondrej-php.list >/dev/null
+}
+
+step "PHP ${PHP_VERSION}"
 if ! command -v "php${PHP_VERSION}" >/dev/null; then
-  $SUDO add-apt-repository -y ppa:ondrej/php >/dev/null
+  add_php_ppa
   $SUDO apt-get update -qq
 fi
 $SUDO apt-get install -y -qq \
