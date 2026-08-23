@@ -492,7 +492,12 @@ cat <<EOF
 
   ${BOLD}Start it${RESET}
     cd ${INSTALL_DIR}/apps/api && ${PHP_BIN} artisan serve   ${DIM}# http://127.0.0.1:8000${RESET}
-    cd ${INSTALL_DIR}/apps/web && npm run dev            ${DIM}# http://localhost:3000  →  /fa${RESET}
+    cd ${INSTALL_DIR}/apps/web && npm start               ${DIM}# http://localhost:3000  →  /fa${RESET}
+
+  ${DIM}The build above is a production build, so ${BOLD}npm start${RESET}${DIM} serves it. Use
+  ${BOLD}npm run dev${RESET}${DIM} while editing — and if you open the dev server from another
+  machine, name that host in DEV_ORIGINS in apps/web/.env.local first, or
+  next dev refuses to serve its own scripts to it.${RESET}
 
   ${BOLD}Checks${RESET}
     cd ${INSTALL_DIR}/apps/api && ${PHP_BIN} artisan test && ./vendor/bin/pint --test

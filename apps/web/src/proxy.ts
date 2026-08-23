@@ -30,7 +30,30 @@ function negotiateLocale(header: string | null): Locale {
   return defaultLocale;
 }
 
-function buildContentSecurityPolicy(nonce: string, isDev: boolean) {
+/**
+ * Whether the browser reached the site over TLS.
+ *
+ * This is not the same question as "is this a production build", and getting
+ * the two confused is expensive: `upgrade-insecure-requests` on an origin that
+ * only answers on `http://` makes the browser rewrite every stylesheet, script
+ * and font URL to `https://`, the connection is refused, and the page renders
+ * as bare HTML. The document itself still arrives, so the site looks like it
+ * lost its CSS rather than like a protocol problem.
+ *
+ * `X-Forwarded-Proto` is what nginx and Cloudflare both send. The request's own
+ * scheme covers a direct hit on the Node server. `ASSUME_HTTPS=true` is the
+ * escape hatch for a proxy that terminates TLS without forwarding the header.
+ */
+function isSecureRequest(request: NextRequest) {
+  if (process.env.ASSUME_HTTPS === 'true') return true;
+
+  const forwarded = request.headers.get('x-forwarded-proto');
+  if (forwarded) return forwarded.split(',')[0].trim().toLowerCase() === 'https';
+
+  return request.nextUrl.protocol === 'https:';
+}
+
+function buildContentSecurityPolicy(nonce: string, isDev: boolean, isSecure: boolean) {
   return [
     `default-src 'self'`,
     // `strict-dynamic` lets the Next bootstrap load its own chunks while
@@ -52,7 +75,9 @@ function buildContentSecurityPolicy(nonce: string, isDev: boolean) {
     `base-uri 'self'`,
     `object-src 'none'`,
     `manifest-src 'self'`,
-    ...(isDev ? [] : ['upgrade-insecure-requests']),
+    // Only ever on an origin that actually answers over TLS. On a plain-HTTP
+    // deployment this directive breaks every subresource on the page.
+    ...(isSecure ? ['upgrade-insecure-requests'] : []),
   ]
     .join('; ')
     .replace(/\s{2,}/g, ' ')
@@ -86,9 +111,10 @@ const SECURITY_HEADERS: Array<[string, string]> = [
 export default function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const isDev = process.env.NODE_ENV === 'development';
+  const isSecure = isSecureRequest(request);
 
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
-  const csp = buildContentSecurityPolicy(nonce, isDev);
+  const csp = buildContentSecurityPolicy(nonce, isDev, isSecure);
 
   const hasLocale = locales.some(
     (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),
@@ -105,7 +131,7 @@ export default function proxy(request: NextRequest) {
     url.search = search;
 
     const redirect = NextResponse.redirect(url);
-    applyHeaders(redirect, csp);
+    applyHeaders(redirect, csp, isSecure);
     return redirect;
   }
 
@@ -114,7 +140,7 @@ export default function proxy(request: NextRequest) {
   requestHeaders.set('content-security-policy', csp);
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
-  applyHeaders(response, csp);
+  applyHeaders(response, csp, isSecure);
 
   // Remember the visitor's choice so the bare domain resolves to it next time.
   const current = pathname.split('/')[1] as Locale;
@@ -123,7 +149,9 @@ export default function proxy(request: NextRequest) {
       path: '/',
       maxAge: ONE_YEAR,
       sameSite: 'lax',
-      secure: !isDev,
+      // Same reasoning as the CSP above: a `Secure` cookie set over plain HTTP
+      // is discarded by the browser, and the visitor's locale never sticks.
+      secure: isSecure,
       httpOnly: false,
     });
   }
@@ -131,9 +159,20 @@ export default function proxy(request: NextRequest) {
   return response;
 }
 
-function applyHeaders(response: NextResponse, csp: string) {
+function applyHeaders(response: NextResponse, csp: string, isSecure: boolean) {
   response.headers.set('Content-Security-Policy', csp);
   for (const [key, value] of SECURITY_HEADERS) response.headers.set(key, value);
+
+  // Duplicating the edge's HSTS means a direct hit on the origin is protected
+  // too — but only over TLS. A browser discards the header on a plain-HTTP
+  // response anyway, and it belongs here rather than in `next.config.ts`
+  // because only a per-request check can know the scheme.
+  if (isSecure) {
+    response.headers.set(
+      'Strict-Transport-Security',
+      'max-age=63072000; includeSubDomains; preload',
+    );
+  }
 }
 
 export const config = {

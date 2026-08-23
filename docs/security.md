@@ -34,13 +34,21 @@ img-src     'self' data: blob:;
 font-src    'self';
 connect-src 'self';
 frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self';
-upgrade-insecure-requests
+upgrade-insecure-requests        # HTTPS requests only
 ```
 
-Three notes:
+Four notes:
 
 - **`strict-dynamic`** lets the Next bootstrap load its own chunks while still
   refusing any script the nonce did not authorise.
+- **`upgrade-insecure-requests`** is conditional on the request having arrived
+  over TLS, read from `X-Forwarded-Proto` or the scheme the Node server was
+  reached on. Sending it unconditionally is how a plain-HTTP deployment loses
+  its stylesheets: the browser rewrites every asset URL to `https://`, the
+  origin has no TLS listener, and a page that is otherwise fine renders as bare
+  HTML. `ASSUME_HTTPS=true` forces it on for a proxy that terminates TLS
+  without forwarding the header. HSTS and the locale cookie's `Secure` flag
+  follow the same rule, for the same reason.
 - **`style-src 'unsafe-inline'`** is the one concession. Next and Motion both
   set style attributes at runtime and there is no nonce-based alternative for
   those.
@@ -53,7 +61,8 @@ Next reads the nonce from.
 
 Also set: `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`,
 `Permissions-Policy` (camera, microphone, geolocation, payment and FLoC all
-off), `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy` and HSTS.
+off), `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy` and HSTS
+(over TLS only, as above).
 
 ### Contact form
 
