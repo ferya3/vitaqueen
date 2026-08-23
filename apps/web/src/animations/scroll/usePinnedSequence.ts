@@ -18,8 +18,8 @@ type Options = {
 /**
  * Pins a section and walks a scrubbed timeline through N discrete steps.
  *
- * This is the mechanism behind the home page "source → bottle" journey and the
- * factory process line: one pinned stage, many states, no page jump.
+ * This is the mechanism behind the factory process line: one pinned stage, many
+ * states, no page jump.
  */
 export function usePinnedSequence<T extends HTMLElement = HTMLDivElement>({
   steps,

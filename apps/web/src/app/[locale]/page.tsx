@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { Hero } from '@/components/hero/Hero';
-import { JourneySequence } from '@/components/home/JourneySequence';
+import { JourneyCascade } from '@/components/home/JourneyCascade';
 import { StoryChapter } from '@/components/home/StoryChapter';
 import { SourceTeaser } from '@/components/home/SourceTeaser';
 import { ProductRail } from '@/components/products/ProductRail';
@@ -48,7 +48,7 @@ export default async function HomePage({ params }: Props) {
           then the five story chapters, then the evidence, then the ask. */}
       <Hero backdrop="spring" scene />
 
-      <JourneySequence />
+      <JourneyCascade />
 
       <StoryChapter chapter="s01" backdrop="mountain" />
       <StoryChapter chapter="s02" backdrop="spring" flip />

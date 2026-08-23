@@ -290,11 +290,16 @@ html.js-motion [data-reveal="scale"]:not([data-revealed="true"]) {
   will-change: opacity, transform;
 }
 
+/* Direction tokens. `--flow-x` flips the sign of a horizontal transform;
+   `--flow-origin` anchors a scale to the edge the reader starts from. Both let
+   one class serve all four locales instead of an `rtl:` twin for every rule. */
 [dir="rtl"] {
   --flow-x: -1;
+  --flow-origin: right center;
 }
 [dir="ltr"] {
   --flow-x: 1;
+  --flow-origin: left center;
 }
 
 @media (prefers-reduced-motion: reduce) {
