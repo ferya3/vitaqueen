@@ -80,75 +80,29 @@
     "journey": {
       "eyebrow": "From source to bottle",
       "title": "One journey, six controlled steps",
-      "lead": "Six controlled steps between a fenced mountain perimeter and a sealed bottle. Open a step to see what is measured — and what is deliberately left alone.",
-      "stage": "Step",
-      "open": "Details",
-      "close": "Close",
       "spring": {
         "title": "Spring",
-        "meta": "Artesian · protected perimeter",
-        "body": "Water surfaces under its own artesian pressure inside a fenced protection perimeter.",
-        "detail": "Nothing pumps the water out of the ground. It reaches the wellhead under the pressure of the aquifer itself, inside a perimeter that is fenced, registered and monitored — which is what keeps surface water, farming and traffic out of the catchment.",
-        "points": [
-          "Artesian pressure, no pumping",
-          "Registered protection zone",
-          "Piezometers under continuous watch"
-        ]
+        "body": "Water surfaces under its own artesian pressure inside a fenced protection perimeter."
       },
       "water": {
         "title": "Water",
-        "meta": "Closed circuit · stainless steel",
-        "body": "It travels through stainless steel lines in a closed circuit — no pumps open to the air.",
-        "detail": "Between the wellhead and the buffer tanks the water never meets open air. The circuit is stainless steel end to end, and flow and pressure are logged the whole way.",
-        "points": [
-          "No contact with the atmosphere",
-          "Stainless steel end to end",
-          "Flow and pressure logged continuously"
-        ]
+        "body": "It travels through stainless steel lines in a closed circuit — no pumps open to the air."
       },
       "filtration": {
         "title": "Filtration",
-        "meta": "Micro-filtration · 0.2 micron",
-        "body": "Micro-filtration removes particles without touching the natural mineral profile.",
-        "detail": "A cascade of filters down to 0.2 micron takes out particles and nothing else. No mineral is added and none is stripped: the profile that leaves the plant is the profile that came out of the rock.",
-        "points": [
-          "Cascade down to 0.2 micron",
-          "Nothing added, nothing removed",
-          "Mineral profile left intact"
-        ]
+        "body": "Micro-filtration removes particles without touching the natural mineral profile."
       },
       "laboratory": {
         "title": "Laboratory",
-        "meta": "Every batch · in-line sampling",
-        "body": "Physical, chemical and microbiological parameters are checked on every production batch.",
-        "detail": "Samples are drawn in line before the filler and again from finished goods. pH, conductivity, turbidity and microbiology are checked on every batch, and the batch stays in quarantine until the laboratory signs its release.",
-        "points": [
-          "pH, conductivity, turbidity",
-          "Microbiology on every batch",
-          "Released only on a signature"
-        ]
+        "body": "Physical, chemical and microbiological parameters are checked on every production batch."
       },
       "bottling": {
         "title": "Bottling",
-        "meta": "Monoblock · blow, fill, cap",
-        "body": "Blowing, filling and capping happen in one aseptic monoblock, seconds apart.",
-        "detail": "Blowing, filling and capping sit in one closed monoblock, so a preform becomes a sealed bottle in a single cycle. The window in which the water is open to the hall is measured in seconds.",
-        "points": [
-          "Preform to sealed bottle in one cycle",
-          "Seconds of exposure",
-          "Closed filling environment"
-        ]
+        "body": "Blowing, filling and capping happen in one aseptic monoblock, seconds apart."
       },
       "product": {
         "title": "Final product",
-        "meta": "Traceable · batch, shift, analysis",
-        "body": "Every pallet is traceable back to its batch, its shift and its analysis sheet.",
-        "detail": "Labelling, date coding and palletising carry the batch identifier forward, so a pallet in a warehouse in another country still points back to the shift that made it and the analysis sheet that released it.",
-        "points": [
-          "Batch code on every pallet",
-          "Quarantine until release",
-          "Traceable to shift and analysis sheet"
-        ]
+        "body": "Every pallet is traceable back to its batch, its shift and its analysis sheet."
       }
     },
     "story": {

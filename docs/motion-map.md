@@ -43,7 +43,7 @@ behind an image.
 | Hero entrance | Word-split headline, staggered `yPercent`, subject scale-in | `useHeroTimeline` | Everything visible, no transform |
 | Hero pointer parallax | `gsap.quickSetter` on the ticker; media −14 px, subject +26 px | `useHeroTimeline` + `usePointer` | Skipped on coarse pointers |
 | Hero scroll-out | Inner content recedes, background scales to 1.12 | `useHeroTimeline` | Static |
-| **Journey cascade** (source → bottle) | Six full-bleed rows over a cross-fading backdrop: staggered entrance, hover expansion, one open panel at a time, cursor-trailing preview | `useCascadeEntrance`, `useCursorPreview` | Rows visible and stacked, disclosure without transition, no preview |
+| **Journey** (source → bottle) | Pinned section, six scrubbed steps, cross-fading panels | `usePinnedSequence` | Panels flow down the page, each revealed on entry |
 | Story chapters 01–05 | Line-split heading, body reveal, parallax art panel | `TextReveal`, `Reveal`, `useParallax` | CSS transition on `data-revealed` |
 | Source teaser | Mineral bars grow on width transition | `MineralChart` | Bars render at final width |
 | Product rail | Vertical scroll drives a horizontal track, pinned | `useHorizontalScroll` | Native swipe carousel below `lg` |
@@ -54,7 +54,7 @@ behind an image.
 | Page | Mechanism |
 | --- | --- |
 | All | `PageHero` line reveal; `PageTransition` fades the body across routes (opacity + 12 px, 450 ms) |
-| Factory | `ProcessSequence` — the eight production stages on `usePinnedSequence`, plus per-stage metrics from the CMS |
+| Factory | `ProcessSequence` — the eight production stages, same pinned mechanism as the home journey, plus per-stage metrics from the CMS |
 | Source | Animated SVG route diagram: dashed stroke offset for flow, pulsing spring marker |
 | Quality | Reveals only. This page is read, not watched — the numbers are the point |
 | Products | Card lift on hover, staggered grid reveal |
@@ -68,8 +68,6 @@ behind an image.
 | Count-up | `Stat` | Final value is server-rendered, so a crawler and a no-JS visitor see the real number |
 | Scroll progress | Header hairline | Written straight to the DOM on scroll; never re-renders React |
 | Header state | Solid past 24 px | `useSyncExternalStore`, re-renders only when the boolean flips |
-| Cursor preview | Journey cascade | `gsap.quickTo` on a fixed frame; never re-renders React, never shows before it knows where the cursor is, hidden while a panel is open |
-| Backdrop drift | Journey cascade | One 26-second `scale` yoyo, paused by `ScrollTrigger` the moment the section leaves the viewport |
 
 ## The WebGL scene
 
