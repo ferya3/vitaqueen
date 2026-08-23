@@ -33,17 +33,45 @@ trap 'die "Failed on line $LINENO. Nothing was rolled back; re-run once the caus
 
 # --- Preflight --------------------------------------------------------------
 
-[[ "$(id -u)" -ne 0 ]] || die "Run this as a normal user with sudo, not as root. Composer and npm both misbehave under root."
-command -v sudo >/dev/null || die "sudo is required."
 grep -q 'ID=ubuntu' /etc/os-release || warn "This script targets Ubuntu 24.04. Continuing anyway."
 
-SUDO="sudo"
-$SUDO -v || die "sudo authentication failed."
+# Running as root works, but it is not what you want on a box that will serve
+# traffic: every file the install writes ends up root-owned, Composer refuses to
+# run its plugins without being told to, and the application processes you start
+# afterwards inherit the habit. A fresh VPS gives you a root shell, so the
+# escape hatch exists — it just has to be asked for.
+if [[ "$(id -u)" -eq 0 ]]; then
+  if [[ "${ALLOW_ROOT:-0}" != "1" ]]; then
+    die "Refusing to run as root.
 
-# Keep the sudo timestamp alive for the length of the run.
-while true; do $SUDO -n true; sleep 50; kill -0 "$$" 2>/dev/null || exit; done 2>/dev/null &
-SUDO_KEEPALIVE=$!
-trap 'kill "$SUDO_KEEPALIVE" 2>/dev/null || true' EXIT
+    Create an unprivileged user and run it as them (recommended):
+
+      adduser --disabled-password --gecos '' vitaqueen \\
+        && usermod -aG sudo vitaqueen \\
+        && install -m 440 /dev/stdin /etc/sudoers.d/vitaqueen <<< 'vitaqueen ALL=(ALL) NOPASSWD:ALL' \\
+        && sudo -iu vitaqueen bash -c 'curl -fsSL ${REPO_URL%.git}/raw/${REPO_BRANCH}/infra/scripts/install-ubuntu.sh | bash'
+
+    Then remove the passwordless sudo rule once the install has finished:
+
+      rm /etc/sudoers.d/vitaqueen && passwd vitaqueen
+
+    Or, if you know what you are trading away, re-run with ALLOW_ROOT=1."
+  fi
+
+  warn "Running as root (ALLOW_ROOT=1). Everything this writes will be root-owned."
+  # Composer bails out under root unless this is set, and silently skips plugins.
+  export COMPOSER_ALLOW_SUPERUSER=1
+  SUDO=""
+else
+  command -v sudo >/dev/null || die "sudo is required when not running as root."
+  SUDO="sudo"
+  sudo -v || die "sudo authentication failed."
+
+  # Keep the sudo timestamp alive for the length of the run.
+  while true; do sudo -n true; sleep 50; kill -0 "$$" 2>/dev/null || exit; done 2>/dev/null &
+  SUDO_KEEPALIVE=$!
+  trap 'kill "$SUDO_KEEPALIVE" 2>/dev/null || true' EXIT
+fi
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -79,7 +107,7 @@ if ! command -v composer >/dev/null; then
   $SUDO "$PHP_BIN" /tmp/composer-setup.php --quiet --install-dir=/usr/local/bin --filename=composer
   rm -f /tmp/composer-setup.php
 fi
-info "$("$PHP_BIN" "$(command -v composer)" --version)"
+info "$("$PHP_BIN" "$(command -v composer)" --version 2>/dev/null)"
 
 step "Node ${NODE_MAJOR}"
 if ! command -v node >/dev/null || [[ "$(node -v | cut -c2- | cut -d. -f1)" -lt "$NODE_MAJOR" ]]; then

@@ -42,10 +42,30 @@ If the repository is private, clone first and run the script from disk:
 git clone -b claude/mineral-water-factory-site-q39765 https://github.com/ferya3/vitaqueen.git && bash vitaqueen/infra/scripts/install-ubuntu.sh
 ```
 
-It is idempotent — re-running never overwrites an existing `.env`. Run it as a
-normal user with sudo, not as root. It deliberately does not touch nginx, TLS or
-Cloudflare; those are deployment decisions, covered in
-[docs/security.md](docs/security.md).
+It is idempotent — re-running never overwrites an existing `.env`.
+
+**A fresh VPS drops you into a root shell, and the script refuses to run there.**
+Everything it writes would be root-owned, Composer skips its plugins under root
+unless told otherwise, and the processes you start afterwards inherit the habit.
+Create an unprivileged user first:
+
+```bash
+adduser --disabled-password --gecos '' vitaqueen && usermod -aG sudo vitaqueen \
+  && install -m 440 /dev/stdin /etc/sudoers.d/vitaqueen <<< 'vitaqueen ALL=(ALL) NOPASSWD:ALL' \
+  && sudo -iu vitaqueen bash -c 'curl -fsSL https://raw.githubusercontent.com/ferya3/vitaqueen/claude/mineral-water-factory-site-q39765/infra/scripts/install-ubuntu.sh | bash'
+```
+
+Then take the passwordless sudo back off once the install has finished:
+
+```bash
+rm /etc/sudoers.d/vitaqueen && passwd vitaqueen
+```
+
+`ALLOW_ROOT=1` overrides the refusal if you have a reason to accept the
+trade-off.
+
+The script deliberately does not touch nginx, TLS or Cloudflare; those are
+deployment decisions, covered in [docs/security.md](docs/security.md).
 
 ## Quick start (manual)
 
