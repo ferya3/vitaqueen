@@ -1,7 +1,21 @@
 import { defineRouting } from 'next-intl/routing';
 
-export const locales = ['fa', 'en', 'ar', 'ru'] as const;
-export type Locale = (typeof locales)[number];
+/**
+ * Every locale the site has content for. The message catalogues for all four
+ * are complete and stay in the repository whether or not they are served.
+ */
+export const allLocales = ['fa', 'en', 'ar', 'ru'] as const;
+export type Locale = (typeof allLocales)[number];
+
+/**
+ * The locales actually served right now.
+ *
+ * Multilingual is switched off until launch: the site runs in Persian only.
+ * This array is the entire switch — put the other three back and the routes,
+ * the language picker, `hreflang`, the sitemap and the locale negotiation in
+ * `proxy.ts` all come back with them. Nothing else is conditional on it.
+ */
+export const locales: readonly Locale[] = ['fa'];
 
 export const defaultLocale: Locale = 'fa';
 

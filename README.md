@@ -14,7 +14,10 @@ docs/        architecture, design system, motion map, security, API reference
 ## What is here
 
 - **Four locales from the first commit** — Persian, English, Arabic, Russian,
-  with RTL handled in layout, typography *and* motion.
+  with RTL handled in layout, typography *and* motion. The site currently
+  *serves* Persian only: `locales` in `apps/web/src/i18n/routing.ts` is the
+  single switch, and the other three catalogues are complete and waiting in
+  `apps/web/messages/`.
 - **A scroll-driven home page** that walks the visitor from the spring to the
   sealed bottle, and a factory page that does the same through the production
   line.

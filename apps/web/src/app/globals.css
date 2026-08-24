@@ -1,6 +1,64 @@
 @import "tailwindcss";
 
 /* ==========================================================================
+   IRANYekan
+   --------------------------------------------------------------------------
+   The Persian face. It is not on Google Fonts and it is not free: fontiran.com
+   calls it proprietary software in the header of its own stylesheet, so the
+   files are deliberately NOT in this repository. They live in
+   `public/fonts/iranyekan/`, which is git-ignored, and
+   `infra/scripts/fetch-iranyekan.sh` puts them there in one command.
+
+   Declared here rather than through `next/font/local` on purpose: a font
+   loader throws at build time when a file is missing, and this one has to
+   survive being absent. Until the files are fetched the browser simply falls
+   through to Vazirmatn — the site is set in the fallback, not broken by it.
+
+   Weights follow the design system's 300–700, mapped to the four cuts the
+   webfont package ships that the system actually uses.
+   ========================================================================== */
+
+@font-face {
+  font-family: "IRANYekan";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("/fonts/iranyekan/iranyekanweblightfanum.woff") format("woff");
+}
+
+@font-face {
+  font-family: "IRANYekan";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/iranyekan/iranyekanwebregularfanum.woff") format("woff");
+}
+
+@font-face {
+  font-family: "IRANYekan";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/iranyekan/iranyekanwebmediumfanum.woff") format("woff");
+}
+
+@font-face {
+  font-family: "IRANYekan";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/iranyekan/iranyekanwebboldfanum.woff") format("woff");
+}
+
+@font-face {
+  font-family: "IRANYekan";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/iranyekan/iranyekanwebextraboldfanum.woff") format("woff");
+}
+
+/* ==========================================================================
    VitaQueen Design System
    --------------------------------------------------------------------------
    Layer 1 of the architecture: brand. Every colour, type step, radius and

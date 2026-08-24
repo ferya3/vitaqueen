@@ -36,3 +36,7 @@ apps/api/bootstrap/cache/*.php
 npm-debug.log*
 yarn-error.log*
 *.log
+
+# IRANYekan is proprietary (fontiran.com) and is fetched, never committed.
+# See infra/scripts/fetch-iranyekan.sh
+apps/web/public/fonts/iranyekan/

@@ -104,11 +104,16 @@ export default async function LocaleLayout({
         {
           // Bind the design system's font tokens to the right face for this
           // locale, once, at the document root.
+          //
+          // Arabic script leads with IRANYekan and falls through to Vazirmatn:
+          // the IRANYekan files are licensed separately and are not in the
+          // repository (see the `@font-face` block in `globals.css`), so the
+          // fallback is what renders until they are fetched.
           '--font-brand-display': isArabicScript
-            ? 'var(--font-arabic)'
+            ? '"IRANYekan", var(--font-arabic)'
             : 'var(--font-latin)',
           '--font-brand-sans': isArabicScript
-            ? 'var(--font-arabic)'
+            ? '"IRANYekan", var(--font-arabic)'
             : 'var(--font-latin)',
         } as React.CSSProperties
       }

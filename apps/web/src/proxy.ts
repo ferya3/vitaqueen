@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { defaultLocale, locales, type Locale } from '@/i18n/routing';
+import { allLocales, defaultLocale, locales, type Locale } from '@/i18n/routing';
 
 const LOCALE_COOKIE = 'NEXT_LOCALE';
 const ONE_YEAR = 60 * 60 * 24 * 365;
@@ -7,7 +7,7 @@ const ONE_YEAR = 60 * 60 * 24 * 365;
 /**
  * Parses `Accept-Language` and returns the best supported locale.
  * Kept deliberately small — a full BCP-47 matcher is not worth a dependency
- * for four locales.
+ * for a handful of locales.
  */
 function negotiateLocale(header: string | null): Locale {
   if (!header) return defaultLocale;
@@ -126,8 +126,19 @@ export default function proxy(request: NextRequest) {
       ? (cookieLocale as Locale)
       : negotiateLocale(request.headers.get('accept-language'));
 
+    // A path already prefixed with a locale the site has stopped serving is a
+    // link from when it did — an index entry, a bookmark, a printed QR code.
+    // Swap the prefix rather than nesting a second one under it, so
+    // `/en/products` lands on the products page instead of a 404.
+    const retired = allLocales.find(
+      (candidate) =>
+        !locales.includes(candidate) &&
+        (pathname === `/${candidate}` || pathname.startsWith(`/${candidate}/`)),
+    );
+    const rest = retired ? pathname.slice(retired.length + 1) : pathname;
+
     const url = request.nextUrl.clone();
-    url.pathname = `/${locale}${pathname === '/' ? '' : pathname}`;
+    url.pathname = `/${locale}${rest === '/' || rest === '' ? '' : rest}`;
     url.search = search;
 
     const redirect = NextResponse.redirect(url);

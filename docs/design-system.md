@@ -38,10 +38,23 @@ according to the locale's script.
 | Script | Face | Why |
 | --- | --- | --- |
 | Latin, Cyrillic | **Manrope** | Geometric, wide apertures, a variable axis that covers 300–700 in one file. Holds up at display sizes. |
-| Persian, Arabic | **Vazirmatn** | Proper Persian digits, correct joining, a full weight range, and an open licence. |
+| Persian, Arabic | **IRANYekan**, falling back to **Vazirmatn** | IRANYekan is the brand's Persian face. Vazirmatn behind it has proper Persian digits, correct joining, a full weight range, and an open licence. |
 
-Both are self-hosted by `next/font/google`, so there is no runtime request to a
-third-party font host and `font-src` in the CSP stays `'self'`.
+Manrope and Vazirmatn are self-hosted by `next/font/google`, so there is no
+runtime request to a third-party font host and `font-src` in the CSP stays
+`'self'`.
+
+**IRANYekan is proprietary** — fontiran.com says so in the header of its own
+stylesheet — so its files are *not* in this repository. They belong in
+`apps/web/public/fonts/iranyekan/`, which is git-ignored, and
+`infra/scripts/fetch-iranyekan.sh` puts them there in one command. Using it on
+a commercial site is a licensing decision for the business.
+
+It is declared with plain `@font-face` in `globals.css` rather than
+`next/font/local` for one reason: a font loader throws at build time when a
+file is missing, and this face has to survive being absent. Without the files
+the browser falls through to Vazirmatn and the site is merely set in the
+fallback, not broken by it.
 
 The scale is written **mobile first**: every step's `clamp()` minimum is the
 size a 360 px phone gets, and it grows to its cap at 1440 px and holds there.

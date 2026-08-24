@@ -27,8 +27,10 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
           aria-modal="true"
           aria-label={t('menu')}
         >
-          <div className="shell flex h-20 items-center justify-between">
-            <LocaleSwitcher tone="light" label={t('language')} />
+          {/* Close sits where the button that opened it was — the leading
+              edge, the right in Persian — so the hand does not cross the
+              screen to undo what it just did. */}
+          <div className="shell flex h-20 items-center justify-between gap-3">
             <button
               type="button"
               onClick={onClose}
@@ -37,6 +39,7 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
               <CloseIcon />
               {t('close')}
             </button>
+            <LocaleSwitcher tone="light" label={t('language')} />
           </div>
 
           <nav className="shell h-[calc(100dvh-5rem)] overflow-y-auto pb-16">
@@ -51,7 +54,25 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
                     {t(item.key)}
                     <ArrowIcon className="h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100" />
                   </Link>
-                </motion.li>
+
+                  {/* The section anchors that used to live in the header
+                      dropdown. Hidden on a phone, where the tall list of
+                      sections is already the whole screen. */}
+                  {item.children ? (
+                    <ul className="hidden flex-wrap gap-x-6 gap-y-2 pb-5 lg:flex">
+                      {item.children.map((child) => (
+                        <li key={child.key}>
+                          <Link
+                            href={child.href}
+                            onClick={onClose}
+                            className="text-sm text-mist-500 transition-colors hover:text-mist-100"
+                          >
+                            {t(child.key)}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}</motion.li>
               ))}
             </ul>
           </nav>

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { siteConfig } from '@/config/site';
-import { locales, localeTags, type Locale } from '@/i18n/routing';
+import { locales, localeTags, defaultLocale, type Locale } from '@/i18n/routing';
 
 type BuildMetadataInput = {
   locale: Locale;
@@ -22,7 +22,7 @@ function absolute(path: string) {
 
 /**
  * Every page's metadata goes through here so that canonical URLs, `hreflang`
- * alternates and Open Graph stay consistent across all four locales.
+ * alternates and Open Graph stay consistent across every locale served.
  */
 export function buildMetadata({
   locale,
@@ -51,8 +51,12 @@ export function buildMetadata({
       canonical,
       languages: {
         ...languages,
-        // English is the fallback for any locale we do not serve.
-        'x-default': absolute(`/en${normalised}`),
+        // The fallback for any locale we do not serve: English while the site
+        // is multilingual, and whatever the single served locale is otherwise.
+        // Pointing `x-default` at a URL that 404s is worse than not sending it.
+        'x-default': absolute(
+          `/${locales.includes('en') ? 'en' : defaultLocale}${normalised}`,
+        ),
       },
     },
     openGraph: {

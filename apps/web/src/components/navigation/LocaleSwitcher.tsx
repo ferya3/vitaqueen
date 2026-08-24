@@ -27,6 +27,11 @@ export function LocaleSwitcher({
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
+  // A language picker with one language in it is a control that cannot do
+  // anything. It stays mounted at every call site and comes back on its own
+  // the moment `locales` in `i18n/routing.ts` lists more than Persian again.
+  const single = locales.length < 2;
+
   function switchTo(next: Locale) {
     setOpen(false);
     startTransition(() => {
@@ -36,6 +41,8 @@ export function LocaleSwitcher({
       router.replace(pathname, { locale: next });
     });
   }
+
+  if (single) return null;
 
   return (
     <div className="relative">

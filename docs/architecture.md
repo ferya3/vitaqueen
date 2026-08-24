@@ -54,6 +54,14 @@ script. Handing that off would have meant `script-src 'unsafe-inline'`.
 `next-intl` still does everything else — message catalogues, `getTranslations`,
 locale-aware `Link` and `useRouter`.
 
+**Only Persian is served at the moment.** `i18n/routing.ts` separates
+`allLocales`, the four the content exists in, from `locales`, the ones actually
+routed — and everything downstream reads the second: static params, the
+sitemap, `hreflang`, the schema, the language picker (which renders nothing
+when there is one language) and the negotiation above. A path still carrying a
+retired prefix is redirected rather than 404'd, so `/en/products` lands on the
+Persian products page. Re-enabling a language is one array.
+
 ### Rendering
 
 Pages render on demand rather than statically, because reading the nonce header
