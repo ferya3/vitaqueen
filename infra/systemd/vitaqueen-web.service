@@ -1,0 +1,57 @@
+[Unit]
+# VitaQueen front end (Next.js).
+#
+# A process started from an SSH session belongs to that session. When the
+# session ends the kernel sends SIGHUP to its process group, and on most Ubuntu
+# installs systemd-logind then reaps whatever is left of the user's slice —
+# which is why `nohup … &` survives a disconnect on some machines and dies on
+# others. A unit does not belong to a session at all: it belongs to the
+# machine, it starts at boot, and it comes back if it crashes.
+#
+# `__PLACEHOLDERS__` are filled in by infra/scripts/install-service.sh.
+Description=VitaQueen front end (Next.js)
+Documentation=https://github.com/ferya3/vitaqueen
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+Group=__GROUP__
+WorkingDirectory=__DIR__/apps/web
+
+# Read by `next start`; apps/web/.env.local is loaded by Next itself.
+Environment=NODE_ENV=production
+Environment=PORT=3000
+# Bind address. Left open so a fresh VPS can be reached at http://<ip>:3000
+# before nginx exists. Once nginx is in front, put HOSTNAME=127.0.0.1 in
+# /etc/default/vitaqueen-web so the origin stops answering the internet
+# directly and only the proxy can reach it.
+EnvironmentFile=-/etc/default/vitaqueen-web
+
+# The Next binary rather than `npm start`: one process fewer between systemd
+# and the server, so signals and exit codes arrive where they are meant to.
+ExecStart=__NODE__ __DIR__/apps/web/node_modules/.bin/next start
+
+# Next shuts down cleanly on SIGINT; SIGTERM would take the timeout instead.
+KillSignal=SIGINT
+TimeoutStopSec=20
+
+Restart=always
+RestartSec=3
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=vitaqueen-web
+
+# The front end reads its own build and writes only its image cache. It has no
+# business anywhere else on the disk.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

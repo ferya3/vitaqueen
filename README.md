@@ -94,6 +94,31 @@ sample data and the page says so, in the visitor's language, wherever numbers
 are involved — so you can develop the whole site before the CMS has a single
 row in it.
 
+## Keeping it running
+
+A server started by hand belongs to the SSH session that started it, and dies
+with it. On a real machine, install the services instead:
+
+```bash
+sudo bash infra/scripts/install-service.sh --with-api
+```
+
+That writes `vitaqueen-web` and `vitaqueen-api` into systemd, running as the
+user who owns the checkout. They start at boot, survive logout, and restart
+themselves if they crash.
+
+```bash
+systemctl status vitaqueen-web
+journalctl -u vitaqueen-web -f
+sudo systemctl restart vitaqueen-web     # after every git pull + npm run build
+```
+
+`PORT` and `HOSTNAME` are read from `/etc/default/vitaqueen-web`. Once nginx is
+in front, set `HOSTNAME=127.0.0.1` there so the origin stops answering the
+internet directly. The API unit runs Laravel's built-in server, which is a
+bridge, not a destination — the production path is PHP-FPM behind
+[infra/nginx/vitaqueen.conf](infra/nginx/vitaqueen.conf).
+
 ## Checks
 
 ```bash

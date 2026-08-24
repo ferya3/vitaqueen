@@ -490,7 +490,14 @@ cat <<EOF
 
   ${BOLD}Running PHP ${PHP_VERSION}${RESET}
 
-  ${BOLD}Start it${RESET}
+  ${BOLD}Start it, and keep it started${RESET}
+    sudo bash ${INSTALL_DIR}/infra/scripts/install-service.sh --with-api
+
+  ${DIM}That installs systemd units for the front end and the API. A server
+  started by hand from an SSH session dies with that session; a unit starts at
+  boot, survives logout, and comes back if it crashes.${RESET}
+
+  ${BOLD}Or run them in the foreground${RESET} ${DIM}(they stop when you disconnect)${RESET}
     cd ${INSTALL_DIR}/apps/api && ${PHP_BIN} artisan serve   ${DIM}# http://127.0.0.1:8000${RESET}
     cd ${INSTALL_DIR}/apps/web && npm start               ${DIM}# http://localhost:3000  →  /fa${RESET}
 

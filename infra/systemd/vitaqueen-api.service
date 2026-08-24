@@ -1,0 +1,43 @@
+[Unit]
+# VitaQueen API (Laravel), on the framework's built-in server.
+#
+# This is the bridge, not the destination. `artisan serve` handles one request
+# at a time and is not a production server; the real deployment is PHP-FPM
+# behind nginx, which infra/nginx/vitaqueen.conf is already written for. Until
+# that is wired up this unit at least keeps the API alive across a logout,
+# instead of the front end quietly falling back to seeded content the moment
+# the SSH session ends.
+#
+# `__PLACEHOLDERS__` are filled in by infra/scripts/install-service.sh.
+Description=VitaQueen API (Laravel, built-in server)
+Documentation=https://github.com/ferya3/vitaqueen
+After=network-online.target mysql.service redis-server.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+Group=__GROUP__
+WorkingDirectory=__DIR__/apps/api
+
+# Loopback only: the front end calls the API server-side, from this same
+# machine. Nothing outside the box has a reason to reach port 8000.
+EnvironmentFile=-/etc/default/vitaqueen-api
+ExecStart=__PHP__ artisan serve --host=127.0.0.1 --port=8000
+
+Restart=always
+RestartSec=3
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=vitaqueen-api
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target
