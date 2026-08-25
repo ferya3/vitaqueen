@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+#
+# mail-expunge — enforce a retention window on the role mailboxes.
+#
+#   mail-expunge              delete mail older than RETENTION_DAYS
+#   mail-expunge --dry-run    count what would go, delete nothing
+#
+# The application prunes contact-form PII from the database after
+# CONTACT_PII_RETENTION_DAYS. Without this, the same personal data lives on
+# forever in the mailbox the notification was sent to, and the retention policy
+# is true of one system and false of the other.
+#
+# Configure it in /etc/vitaqueen-mail.env:
+#   RETENTION_MAILBOXES="info sales export"      empty disables this entirely
+#   RETENTION_DAYS=365
+
+set -Eeuo pipefail
+
+ENV_FILE="${MAIL_ENV_FILE:-/etc/vitaqueen-mail.env}"
+DIM=$'\e[2m'; GREEN=$'\e[32m'; YELLOW=$'\e[33m'; RED=$'\e[31m'; RESET=$'\e[0m'
+info() { printf '%s    %s%s\n' "$DIM" "$1" "$RESET"; }
+ok()   { printf '%s  ✓ %s%s\n' "$GREEN" "$1" "$RESET"; }
+warn() { printf '%s !! %s%s\n' "$YELLOW" "$1" "$RESET"; }
+die()  { printf '%s !! %s%s\n' "$RED" "$1" "$RESET" >&2; exit 1; }
+
+[[ -r "$ENV_FILE" ]] || die "$ENV_FILE not found."
+# shellcheck disable=SC1090
+source "$ENV_FILE"
+
+DRY_RUN=no
+[[ "${1:-}" == "--dry-run" ]] && DRY_RUN=yes
+
+MAILBOXES="${RETENTION_MAILBOXES:-}"
+DAYS="${RETENTION_DAYS:-365}"
+
+if [[ -z "$MAILBOXES" ]]; then
+  info "RETENTION_MAILBOXES is empty — nothing to do."
+  exit 0
+fi
+
+# A typo in a retention window is not recoverable: the mail is gone. Thirty
+# days is the floor, and it is still short enough to be a mistake worth
+# refusing.
+[[ "$DAYS" =~ ^[0-9]+$ ]] || die "RETENTION_DAYS is not a number: $DAYS"
+(( DAYS >= 30 )) || die "RETENTION_DAYS=$DAYS is under the 30-day floor. Refusing."
+
+for local_part in $MAILBOXES; do
+  address="$local_part@$MAIL_DOMAIN"
+
+  if ! doveadm user "$address" >/dev/null 2>&1; then
+    warn "$address does not exist — skipped"
+    continue
+  fi
+
+  count="$(doveadm search -u "$address" mailbox '*' savedbefore "${DAYS}d" 2>/dev/null | wc -l || true)"
+  count="${count:-0}"
+
+  if (( count == 0 )); then
+    info "$address: nothing older than $DAYS days"
+    continue
+  fi
+
+  if [[ "$DRY_RUN" == yes ]]; then
+    warn "$address: $count message(s) would be deleted"
+    continue
+  fi
+
+  doveadm expunge -u "$address" mailbox '*' savedbefore "${DAYS}d"
+  ok "$address: expunged $count message(s) older than $DAYS days"
+  logger -t mail-expunge "expunged $count messages older than ${DAYS}d from $address"
+done

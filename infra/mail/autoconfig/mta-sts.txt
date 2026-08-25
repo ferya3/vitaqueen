@@ -1,0 +1,4 @@
+version: STSv1
+mode: __STS_MODE__
+mx: __MAIL_HOSTNAME__
+max_age: 604800

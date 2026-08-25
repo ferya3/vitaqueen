@@ -1,0 +1,21 @@
+# Mail logs name every sender and recipient this server has handled. They are
+# personal data with an operational purpose that expires: two weeks is about
+# what it takes to investigate a delivery complaint, and nothing needs them
+# afterwards.
+#
+# The application makes the same promise about contact-form PII in
+# apps/api/config/vitaqueen.php. Two systems, one policy.
+/var/log/mail.log
+/var/log/mail.err
+{
+    rotate 14
+    daily
+    missingok
+    notifempty
+    compress
+    delaycompress
+    sharedscripts
+    postrotate
+        /usr/lib/rsyslog/rsyslog-rotate 2>/dev/null || true
+    endscript
+}

@@ -7,7 +7,7 @@ production industrial site actually needs.
 ```
 apps/web     Next.js 16 · React 19 · TypeScript · Tailwind 4 · GSAP · Lenis · Three.js
 apps/api     Laravel 13 · PHP 8.4 · MySQL 8 · Redis
-infra/       nginx origin config, local Docker services
+infra/       nginx origin config, local Docker services, a mail server
 docs/        architecture, design system, motion map, security, API reference
 ```
 

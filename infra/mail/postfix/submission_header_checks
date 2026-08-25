@@ -1,0 +1,12 @@
+# Applied to submitted mail only (see submission-cleanup in master.cf).
+#
+# Strips the Received header this server would otherwise add for the
+# submitting client, which carries the staff member's home or hotel IP address
+# to every recipient. That address is also frequently on a consumer blocklist,
+# so removing it is worth a point of reputation as well as the privacy.
+#
+# Only the ESMTPSA hop is removed. The rest of the chain is evidence and stays.
+/^Received:.*with ESMTPSA/     IGNORE
+/^X-Originating-IP:/           IGNORE
+/^X-Mailer:/                   IGNORE
+/^User-Agent:/                 IGNORE

@@ -1,0 +1,17 @@
+[Unit]
+Description=Off-site backup of mail, accounts, configuration and DKIM keys
+Documentation=file:///opt/vitaqueen/infra/mail/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/mail-backup
+Nice=10
+IOSchedulingClass=idle
+# The backup reads every mailbox; it should not be able to do anything else.
+ProtectSystem=strict
+ReadWritePaths=/var/cache /tmp
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true

@@ -1,0 +1,278 @@
+#!/usr/bin/env bash
+#
+# mail-check — verify that this mail server is actually correct, from the
+# outside in. Run it after publishing DNS, and again after every change.
+#
+#   mail-check            everything
+#   mail-check --dns      DNS only (safe to run from anywhere)
+#
+# It checks the things that decide whether mail is delivered, not whether the
+# daemons are running: a mail server with every process up and no PTR record
+# is a mail server that does not work.
+
+set -Eeuo pipefail
+
+ENV_FILE="${MAIL_ENV_FILE:-/etc/vitaqueen-mail.env}"
+
+BOLD=$'\e[1m'; DIM=$'\e[2m'; GREEN=$'\e[32m'; YELLOW=$'\e[33m'; RED=$'\e[31m'; RESET=$'\e[0m'
+PASS=0; FAIL=0; SKIP=0
+
+pass() { printf '  %s✓%s %-42s %s%s%s\n' "$GREEN" "$RESET" "$1" "$DIM" "${2:-}" "$RESET"; PASS=$((PASS+1)); }
+fail() { printf '  %s✗%s %-42s %s%s%s\n' "$RED" "$RESET" "$1" "$YELLOW" "${2:-}" "$RESET"; FAIL=$((FAIL+1)); }
+skip() { printf '  %s–%s %-42s %s%s%s\n' "$DIM" "$RESET" "$1" "$DIM" "${2:-}" "$RESET"; SKIP=$((SKIP+1)); }
+head_() { printf '\n%s%s%s\n' "$BOLD" "$1" "$RESET"; }
+
+[[ -r "$ENV_FILE" ]] || { echo "$ENV_FILE not found. Run install-mail.sh first." >&2; exit 1; }
+# shellcheck disable=SC1090
+source "$ENV_FILE"
+
+DNS_ONLY=no
+[[ "${1:-}" == "--dns" ]] && DNS_ONLY=yes
+
+txt() { dig +short TXT "$1" 2>/dev/null | tr -d '"' | tr '\n' ' ' | sed 's/[[:space:]]*$//'; }
+
+public_ip() {
+  local ip
+  ip="$(curl -fsS --max-time 5 https://api.ipify.org 2>/dev/null || true)"
+  [[ -z "$ip" ]] && ip="$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}' || true)"
+  printf '%s' "$ip"
+}
+
+IP="$(public_ip)"
+
+# --- DNS -------------------------------------------------------------------
+head_ "DNS — what the rest of the internet sees"
+
+A_RECORD="$(dig +short A "$MAIL_HOSTNAME" | tail -1)"
+if [[ -z "$A_RECORD" ]]; then
+  fail "A record for $MAIL_HOSTNAME" "not published"
+elif [[ -n "$IP" && "$A_RECORD" != "$IP" ]]; then
+  fail "A record for $MAIL_HOSTNAME" "points at $A_RECORD, this host is $IP"
+else
+  pass "A record for $MAIL_HOSTNAME" "$A_RECORD"
+fi
+
+# Forward-confirmed reverse DNS: the IP names the host, and the host names the
+# IP back. Gmail and Outlook both treat a mismatch as a strong negative.
+if [[ -n "$IP" ]]; then
+  PTR="$(dig +short -x "$IP" | sed 's/\.$//' | tail -1)"
+  if [[ -z "$PTR" ]]; then
+    fail "PTR for $IP" "not set — ask the hosting provider"
+  elif [[ "$PTR" != "$MAIL_HOSTNAME" ]]; then
+    fail "PTR for $IP" "says $PTR, should be $MAIL_HOSTNAME"
+  elif [[ "$(dig +short A "$PTR" | tail -1)" != "$IP" ]]; then
+    fail "Forward-confirmed reverse DNS" "$PTR does not resolve back to $IP"
+  else
+    pass "Forward-confirmed reverse DNS" "$IP ⇄ $PTR"
+  fi
+else
+  skip "PTR" "could not determine this host's public address"
+fi
+
+MX="$(dig +short MX "$MAIL_DOMAIN" | sort -n | head -1)"
+if [[ "$MX" == *"$MAIL_HOSTNAME"* ]]; then
+  pass "MX for $MAIL_DOMAIN" "$MX"
+else
+  fail "MX for $MAIL_DOMAIN" "${MX:-not published}"
+fi
+
+SPF="$(txt "$MAIL_DOMAIN" | grep -o 'v=spf1[^"]*' || true)"
+case "$SPF" in
+  "")            fail "SPF" "not published" ;;
+  *"+all"*)      fail "SPF" "ends in +all — this authorises the entire internet" ;;
+  *"-all"*)      pass "SPF" "$SPF" ;;
+  *"~all"*)      pass "SPF" "$SPF (soft fail; tighten to -all once reports are clean)" ;;
+  *)             fail "SPF" "no all-qualifier: $SPF" ;;
+esac
+
+DKIM="$(txt "mail._domainkey.$MAIL_DOMAIN")"
+if [[ "$DKIM" == *"p="* && "$DKIM" != *"p=;"* ]]; then
+  pass "DKIM selector 'mail'" "${#DKIM} bytes published"
+else
+  fail "DKIM selector 'mail'" "${DKIM:-not published}"
+fi
+
+if [[ "${APP_PLANE:-no}" == "yes" ]]; then
+  DKIM_APP="$(txt "app._domainkey.$BOUNCE_DOMAIN")"
+  if [[ "$DKIM_APP" == *"p="* && "$DKIM_APP" != *"p=;"* ]]; then
+    pass "DKIM selector 'app'" "${#DKIM_APP} bytes published"
+  else
+    fail "DKIM selector 'app'" "${DKIM_APP:-not published}"
+  fi
+
+  SPF_BOUNCE="$(txt "$BOUNCE_DOMAIN" | grep -o 'v=spf1[^"]*' || true)"
+  if [[ -n "$SPF_BOUNCE" ]]; then
+    pass "SPF for $BOUNCE_DOMAIN" "$SPF_BOUNCE"
+  else
+    fail "SPF for $BOUNCE_DOMAIN" "not published — application bounces will fail SPF"
+  fi
+fi
+
+DMARC="$(txt "_dmarc.$MAIL_DOMAIN")"
+case "$DMARC" in
+  "")             fail "DMARC" "not published" ;;
+  *"p=reject"*)   pass "DMARC" "p=reject" ;;
+  *"p=quarantine"*) pass "DMARC" "p=quarantine — one step from reject" ;;
+  *"p=none"*)     pass "DMARC" "p=none — collecting reports, not yet protecting" ;;
+  *)              fail "DMARC" "unparsable: $DMARC" ;;
+esac
+if [[ -n "$DMARC" && "$DMARC" != *"rua="* ]]; then
+  fail "DMARC rua" "no reporting address — you will never learn who is forging you"
+fi
+
+STS="$(txt "_mta-sts.$MAIL_DOMAIN")"
+if [[ "$STS" == *"v=STSv1"* ]]; then
+  POLICY="$(curl -fsS --max-time 10 "https://mta-sts.$MAIL_DOMAIN/.well-known/mta-sts.txt" 2>/dev/null || true)"
+  if [[ "$POLICY" == *"STSv1"* ]]; then
+    MODE="$(printf '%s' "$POLICY" | grep -i '^mode:' | awk '{print $2}' | tr -d '\r' || true)"
+    pass "MTA-STS" "$STS, policy mode: $MODE"
+  else
+    fail "MTA-STS" "TXT published but the policy file is not reachable over HTTPS"
+  fi
+else
+  skip "MTA-STS" "not published (optional, but it is what makes inbound TLS mandatory)"
+fi
+
+TLSRPT="$(txt "_smtp._tls.$MAIL_DOMAIN")"
+if [[ "$TLSRPT" == *"TLSRPTv1"* ]]; then
+  pass "TLS-RPT" "$TLSRPT"
+else
+  skip "TLS-RPT" "not published"
+fi
+
+[[ "$DNS_ONLY" == yes ]] && { printf '\n  %d passed, %d failed, %d skipped\n\n' "$PASS" "$FAIL" "$SKIP"; exit $(( FAIL > 0 )); }
+
+# --- Services --------------------------------------------------------------
+head_ "Services"
+for unit in postfix dovecot rspamd redis-server unbound; do
+  if systemctl is-active --quiet "$unit"; then
+    pass "$unit" "running"
+  else
+    fail "$unit" "not running — systemctl status $unit"
+  fi
+done
+for unit in clamav-daemon fail2ban nginx; do
+  if systemctl is-active --quiet "$unit" 2>/dev/null; then
+    pass "$unit" "running"
+  else
+    skip "$unit" "not running"
+  fi
+done
+
+# --- Listeners -------------------------------------------------------------
+head_ "Listeners"
+listening() { ss -lnt 2>/dev/null | awk -v p=":$1" '$4 ~ p"$" {found=1} END{exit !found}'; }
+for port in 25 465 587 993; do
+  if listening "$port"; then
+    pass "port $port" "listening"
+  else
+    fail "port $port" "nothing listening"
+  fi
+done
+if listening 143; then
+  fail "port 143" "cleartext IMAP is open — it should be disabled"
+else
+  pass "port 143 closed" "cleartext IMAP disabled"
+fi
+if listening 11332; then
+  pass "rspamd milter (11332)" "listening"
+else
+  fail "rspamd milter (11332)" "Postfix will tempfail every message"
+fi
+
+# --- TLS -------------------------------------------------------------------
+head_ "TLS"
+CERT="/etc/letsencrypt/live/$MAIL_HOSTNAME/fullchain.pem"
+if [[ -r "$CERT" ]]; then
+  END="$(openssl x509 -noout -enddate -in "$CERT" | cut -d= -f2)"
+  DAYS=$(( ( $(date -d "$END" +%s) - $(date +%s) ) / 86400 ))
+  if (( DAYS < 0 )); then
+    fail "Certificate" "expired $(( -DAYS )) days ago"
+  elif (( DAYS < 14 )); then
+    fail "Certificate" "expires in $DAYS days — renewal is not working"
+  else
+    pass "Certificate" "$DAYS days remaining"
+  fi
+
+  SANS="$(openssl x509 -noout -ext subjectAltName -in "$CERT" 2>/dev/null | tr ',' '\n' | grep -o 'DNS:[^ ]*' | cut -d: -f2 | tr -d ' ' || true)"
+  for name in "$MAIL_HOSTNAME" "mta-sts.$MAIL_DOMAIN"; do
+    if grep -qx "$name" <<< "$SANS"; then
+      pass "Certificate covers $name"
+    else
+      fail "Certificate covers $name" "missing from the SAN list"
+    fi
+  done
+else
+  fail "Certificate" "$CERT is not readable"
+fi
+
+for port in 25 465 993; do
+  opts=(-connect "$MAIL_HOSTNAME:$port")
+  [[ "$port" == 25 ]] && opts+=(-starttls smtp)
+  if echo | timeout 15 openssl s_client "${opts[@]}" -servername "$MAIL_HOSTNAME" 2>/dev/null | grep -q 'BEGIN CERTIFICATE'; then
+    pass "TLS on port $port" "negotiated"
+  else
+    fail "TLS on port $port" "no certificate offered"
+  fi
+done
+
+# --- Behaviour -------------------------------------------------------------
+head_ "Behaviour"
+
+# Port 25 outbound. Most clouds block it, and a blocked port 25 means this
+# server can receive mail and never send any — which looks like a delivery
+# problem for weeks before anyone checks.
+if timeout 10 bash -c "exec 3<>/dev/tcp/gmail-smtp-in.l.google.com/25" 2>/dev/null; then
+  pass "Outbound port 25" "reachable"
+else
+  fail "Outbound port 25" "blocked — nothing this host sends will ever leave"
+fi
+
+if command -v swaks >/dev/null; then
+  # The relay test must come from outside, so it connects to the public address
+  # rather than to localhost: 127.0.0.1 is in mynetworks and is *supposed* to
+  # be allowed to relay.
+  if [[ -n "$IP" ]]; then
+    RELAY="$(swaks --server "$IP" --from "relaytest@example.org" --to "relaytest@example.net" \
+               --quit-after RCPT --timeout 15 2>&1 || true)"
+    if grep -qE '<[*][*] 5[0-9][0-9]' <<< "$RELAY"; then
+      pass "Open relay refused" "rejected at RCPT, as it must be"
+    else
+      fail "OPEN RELAY" "this server relayed mail for a stranger — stop it now"
+    fi
+  else
+    skip "Open relay test" "no public address determined"
+  fi
+
+  # An address that does not exist must be refused during the conversation,
+  # not accepted and bounced afterwards.
+  UNKNOWN="$(swaks --server "$IP" --from "postmaster@example.org" \
+               --to "definitely-not-a-mailbox-$RANDOM@$MAIL_DOMAIN" \
+               --quit-after RCPT --timeout 15 2>&1 || true)"
+  if grep -qE '<[*][*] 5[0-9][0-9]' <<< "$UNKNOWN"; then
+    pass "Unknown recipient rejected" "no catch-all, no backscatter"
+  else
+    fail "Unknown recipient accepted" "this host will generate backscatter"
+  fi
+else
+  skip "Relay and recipient tests" "install swaks to run them"
+fi
+
+QUEUE="$(mailq 2>/dev/null | grep -c '^[A-F0-9]' || true)"
+if (( QUEUE == 0 )); then
+  pass "Queue" "empty"
+elif (( QUEUE < 20 )); then
+  pass "Queue" "$QUEUE message(s) in flight"
+else
+  fail "Queue" "$QUEUE messages — something is not being delivered"
+fi
+
+printf '\n  %s%d passed%s, %s%d failed%s, %d skipped\n\n' \
+  "$GREEN" "$PASS" "$RESET" "$( ((FAIL)) && printf '%s' "$RED" || printf '%s' "$DIM")" "$FAIL" "$RESET" "$SKIP"
+
+if (( FAIL )); then
+  printf '  %sFix the failures above before sending real mail. A server that is 90%%%s\n' "$DIM" "$RESET"
+  printf '  %sright delivers 0%% of the time to Gmail.%s\n\n' "$DIM" "$RESET"
+  exit 1
+fi
+exit 0

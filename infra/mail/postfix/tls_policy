@@ -1,0 +1,10 @@
+# Per-destination outbound TLS policy, consulted after the MTA-STS resolver.
+#
+# Use it to pin a partner whose mail must never travel in the clear — a
+# distributor, a certification body, a bank. `encrypt` means the message stays
+# in the queue rather than going out unprotected, so add entries deliberately:
+# a typo here delays real mail for five days and then bounces it.
+#
+#   example-partner.com     encrypt protocols=>=TLSv1.2
+#
+# Run `postmap /etc/postfix/tls_policy` after every edit.

@@ -1,0 +1,242 @@
+#!/usr/bin/env bash
+#
+# mailbox — add, remove and re-key the accounts on this mail host.
+#
+#   mailbox add    you@example.com [password]
+#   mailbox passwd you@example.com [password]
+#   mailbox alias  info@example.com you@example.com[,other@example.com]
+#   mailbox unalias info@example.com
+#   mailbox sender info@example.com you@example.com[,other@example.com]
+#   mailbox quota  you@example.com 20G
+#   mailbox del    you@example.com [--purge]
+#   mailbox list
+#
+# Three files have to agree for an address to work: Dovecot's user list decides
+# whether the password is right, Postfix's vmailbox decides whether the address
+# exists at all, and sender_login decides who may send as it. Editing one by
+# hand and forgetting the others is the most common way to build a mailbox that
+# accepts mail and cannot be opened.
+
+set -Eeuo pipefail
+
+ENV_FILE="${MAIL_ENV_FILE:-/etc/vitaqueen-mail.env}"
+USERS=/etc/dovecot/users
+VMAILBOX=/etc/postfix/vmailbox
+ALIASES=/etc/postfix/virtual_alias
+SENDER_LOGIN=/etc/postfix/sender_login
+VMAIL_ROOT=/var/vmail
+
+BOLD=$'\e[1m'; DIM=$'\e[2m'; GREEN=$'\e[32m'; YELLOW=$'\e[33m'; RED=$'\e[31m'; RESET=$'\e[0m'
+info() { printf '%s    %s%s\n' "$DIM" "$1" "$RESET"; }
+ok()   { printf '%s  ✓ %s%s\n' "$GREEN" "$1" "$RESET"; }
+warn() { printf '%s !! %s%s\n' "$YELLOW" "$1" "$RESET"; }
+die()  { printf '%s !! %s%s\n' "$RED" "$1" "$RESET" >&2; exit 1; }
+
+[[ -r "$ENV_FILE" ]] || die "$ENV_FILE not found. Run install-mail.sh first."
+# shellcheck disable=SC1090
+source "$ENV_FILE"
+
+[[ "$(id -u)" -eq 0 ]] || die "Run as root: these files are only readable by root and Dovecot."
+
+PASSWORD_SCHEME="${PASSWORD_SCHEME:-BLF-CRYPT}"
+
+usage() { sed -n '3,20p' "$0" | sed 's/^# \?//'; exit "${1:-1}"; }
+
+valid_address() {
+  [[ "$1" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]] || die "Not an email address: $1"
+}
+
+# Every address this host is willing to own. Postfix will not deliver to a
+# domain that is not in virtual_mailbox_domains, so refusing here is kinder
+# than discovering it at the first bounce.
+local_domain() {
+  local domain="${1##*@}"
+  [[ "$domain" == "$MAIL_DOMAIN" || "$domain" == "$BOUNCE_DOMAIN" ]] \
+    || die "$domain is not hosted here. Local domains: $MAIL_DOMAIN, $BOUNCE_DOMAIN"
+}
+
+reload_maps() {
+  postmap "$VMAILBOX" "$ALIASES" "$SENDER_LOGIN"
+  systemctl reload postfix
+  # Dovecot re-reads the passwd-file per lookup, but a cached auth failure
+  # would otherwise survive a password change for a couple of minutes.
+  doveadm auth cache flush >/dev/null 2>&1 || true
+}
+
+generate_password() {
+  # 4 groups of 5 from an unambiguous alphabet: strong enough to be the only
+  # thing between the internet and a mailbox, short enough to read down a phone.
+  local alphabet='abcdefghijkmnopqrstuvwxyz23456789' out=''
+  local i
+  for i in $(seq 1 20); do
+    out+="${alphabet:$((RANDOM % ${#alphabet})):1}"
+    (( i % 5 == 0 && i < 20 )) && out+='-'
+  done
+  printf '%s' "$out"
+}
+
+hash_password() {
+  doveadm pw -s "$PASSWORD_SCHEME" -p "$1"
+}
+
+users_has() { grep -q "^${1//./\\.}:" "$USERS" 2>/dev/null; }
+
+cmd_add() {
+  local address="${1:-}" password="${2:-}" generated=no
+  [[ -n "$address" ]] || usage
+  valid_address "$address"
+  local_domain "$address"
+  users_has "$address" && die "$address already exists. Use \`mailbox passwd\` to change its password."
+
+  if [[ -z "$password" ]]; then
+    password="$(generate_password)"
+    generated=yes
+  fi
+
+  local hash domain user
+  hash="$(hash_password "$password")"
+  domain="${address##*@}"
+  user="${address%@*}"
+
+  printf '%s:%s\n' "$address" "$hash" >> "$USERS"
+  printf '%s\t%s/%s/\n' "$address" "$domain" "$user" >> "$VMAILBOX"
+  printf '%s\t%s\n' "$address" "$address" >> "$SENDER_LOGIN"
+  chmod 640 "$USERS"; chown root:dovecot "$USERS"
+
+  # Dovecot creates the Maildir on first delivery; creating it now means a
+  # client that connects before any mail arrives does not see an error.
+  install -d -o vmail -g vmail -m 700 "$VMAIL_ROOT/$domain/$user"
+
+  reload_maps
+  ok "Created $address"
+  if [[ "$generated" == yes ]]; then
+    printf '\n    %sPassword:%s %s\n\n' "$BOLD" "$RESET" "$password"
+    warn "Printed once. It is stored only as a hash — there is no way to recover it."
+  fi
+}
+
+cmd_passwd() {
+  local address="${1:-}" password="${2:-}" generated=no
+  [[ -n "$address" ]] || usage
+  users_has "$address" || die "No such mailbox: $address"
+
+  if [[ -z "$password" ]]; then
+    password="$(generate_password)"
+    generated=yes
+  fi
+
+  local hash escaped
+  hash="$(hash_password "$password")"
+  escaped="${address//./\\.}"
+  # Keep any extra fields (a per-mailbox quota) that follow the hash.
+  awk -F: -v addr="$address" -v hash="$hash" 'BEGIN{OFS=":"}
+       $1 == addr { $2 = hash } { print }' "$USERS" > "$USERS.new"
+  grep -q "^${escaped}:" "$USERS.new" || die "Rewrite lost $address — $USERS.new kept for inspection."
+  mv "$USERS.new" "$USERS"
+  chmod 640 "$USERS"; chown root:dovecot "$USERS"
+
+  doveadm auth cache flush >/dev/null 2>&1 || true
+  ok "Password changed for $address"
+  [[ "$generated" == yes ]] && printf '\n    %sPassword:%s %s\n\n' "$BOLD" "$RESET" "$password"
+  # Existing IMAP sessions keep working until they reconnect. That is Dovecot's
+  # behaviour, not a bug here — kick them if the password was leaked:
+  info "Existing sessions survive until they reconnect: doveadm kick $address"
+}
+
+cmd_quota() {
+  local address="${1:-}" size="${2:-}"
+  [[ -n "$address" && -n "$size" ]] || usage
+  users_has "$address" || die "No such mailbox: $address"
+
+  awk -F: -v addr="$address" -v q="userdb_quota_rule=*:storage=$size" 'BEGIN{OFS=":"}
+       $1 == addr { print $1, $2, "", "", "", "", "", q; next } { print }' "$USERS" > "$USERS.new"
+  mv "$USERS.new" "$USERS"
+  chmod 640 "$USERS"; chown root:dovecot "$USERS"
+  ok "Quota for $address set to $size"
+}
+
+cmd_alias() {
+  local source="${1:-}" destination="${2:-}"
+  [[ -n "$source" && -n "$destination" ]] || usage
+  valid_address "$source"
+  local_domain "$source"
+  grep -q "^${source//./\\.}[[:space:]]" "$ALIASES" && die "$source is already an alias. Remove it first: mailbox unalias $source"
+  users_has "$source" && warn "$source is also a real mailbox; the alias wins and the mailbox stops receiving."
+
+  printf '%s\t%s\n' "$source" "$destination" >> "$ALIASES"
+  reload_maps
+  ok "$source → $destination"
+}
+
+cmd_unalias() {
+  local source="${1:-}"
+  [[ -n "$source" ]] || usage
+  sed -i "/^${source//./\\.}[[:space:]]/d" "$ALIASES"
+  reload_maps
+  ok "Removed alias $source"
+}
+
+cmd_sender() {
+  local address="${1:-}" owners="${2:-}"
+  [[ -n "$address" && -n "$owners" ]] || usage
+  sed -i "/^${address//./\\.}[[:space:]]/d" "$SENDER_LOGIN"
+  printf '%s\t%s\n' "$address" "$owners" >> "$SENDER_LOGIN"
+  reload_maps
+  ok "$owners may now send as $address"
+}
+
+cmd_del() {
+  local address="${1:-}" purge="${2:-}"
+  [[ -n "$address" ]] || usage
+  users_has "$address" || die "No such mailbox: $address"
+
+  local escaped domain user
+  escaped="${address//./\\.}"
+  domain="${address##*@}"; user="${address%@*}"
+
+  sed -i "/^${escaped}:/d" "$USERS"
+  sed -i "/^${escaped}[[:space:]]/d" "$VMAILBOX"
+  sed -i "/^${escaped}[[:space:]]/d" "$SENDER_LOGIN"
+  reload_maps
+  ok "Removed $address — mail to it is now rejected at RCPT"
+
+  if [[ "$purge" == "--purge" ]]; then
+    read -rp "    Delete $VMAIL_ROOT/$domain/$user and everything in it? [type the address] " confirm
+    [[ "$confirm" == "$address" ]] || die "Not confirmed. The maildir is untouched."
+    rm -rf "${VMAIL_ROOT:?}/$domain/$user"
+    ok "Deleted the maildir"
+  else
+    info "The maildir is kept at $VMAIL_ROOT/$domain/$user. Remove it with --purge once you are sure."
+  fi
+}
+
+cmd_list() {
+  printf '%s%-38s %-10s %s%s\n' "$BOLD" "MAILBOX" "USED" "QUOTA" "$RESET"
+  local address used quota
+  while IFS=: read -r address _; do
+    [[ -z "$address" || "$address" == \#* ]] && continue
+    # `|| true`: doveadm exits non-zero for a mailbox with no quota set, and
+    # under `set -e` that would end the listing rather than print a dash.
+    used="$(doveadm quota get -u "$address" 2>/dev/null | awk '$1=="User" && $2=="quota" && $3=="STORAGE" {printf "%.0f MB", $4/1024}' || true)"
+    quota="$(doveadm quota get -u "$address" 2>/dev/null | awk '$1=="User" && $2=="quota" && $3=="STORAGE" {printf "%.0f MB", $5/1024}' || true)"
+    printf '%-38s %-10s %s\n' "$address" "${used:-—}" "${quota:-—}"
+  done < "$USERS"
+
+  if [[ -s "$ALIASES" ]] && grep -qv '^#' "$ALIASES"; then
+    printf '\n%s%-38s %s%s\n' "$BOLD" "ALIAS" "DELIVERS TO" "$RESET"
+    grep -v '^#' "$ALIASES" | grep -v '^$' | awk '{printf "%-38s %s\n", $1, $2}'
+  fi
+}
+
+case "${1:-}" in
+  add)     shift; cmd_add "$@" ;;
+  passwd)  shift; cmd_passwd "$@" ;;
+  quota)   shift; cmd_quota "$@" ;;
+  alias)   shift; cmd_alias "$@" ;;
+  unalias) shift; cmd_unalias "$@" ;;
+  sender)  shift; cmd_sender "$@" ;;
+  del)     shift; cmd_del "$@" ;;
+  list)    shift; cmd_list "$@" ;;
+  -h|--help|help) usage 0 ;;
+  *)       usage ;;
+esac

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Thunderbird and anything else that speaks Mozilla autoconfig fetches this
+     from https://autoconfig.__MAIL_DOMAIN__/mail/config-v1.1.xml the moment a
+     user types their address. The alternative is walking every member of staff
+     through four hostnames and two port numbers over the phone. -->
+<clientConfig version="1.1">
+  <emailProvider id="__MAIL_DOMAIN__">
+    <domain>__MAIL_DOMAIN__</domain>
+    <displayName>__MAIL_DOMAIN__</displayName>
+    <displayShortName>__MAIL_DOMAIN__</displayShortName>
+
+    <incomingServer type="imap">
+      <hostname>__MAIL_HOSTNAME__</hostname>
+      <port>993</port>
+      <socketType>SSL</socketType>
+      <authentication>password-cleartext</authentication>
+      <username>%EMAILADDRESS%</username>
+    </incomingServer>
+
+    <outgoingServer type="smtp">
+      <hostname>__MAIL_HOSTNAME__</hostname>
+      <port>465</port>
+      <socketType>SSL</socketType>
+      <authentication>password-cleartext</authentication>
+      <username>%EMAILADDRESS%</username>
+    </outgoingServer>
+  </emailProvider>
+</clientConfig>

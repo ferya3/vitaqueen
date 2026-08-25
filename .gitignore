@@ -13,6 +13,7 @@ build/
 .env.local
 .env.*.local
 !.env.example
+infra/mail/mail.env
 
 # Laravel
 apps/api/storage/*.key

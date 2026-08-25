@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+#
+# dns-records — print every DNS record this mail server needs, filled in with
+# the keys and addresses it actually has.
+#
+#   dns-records            human-readable table, for pasting into a DNS panel
+#   dns-records --zone     BIND zone fragment
+#
+# More mail is lost to a missing record here than to a broken daemon. Publish
+# all of it, then run `mail-check`.
+
+set -Eeuo pipefail
+
+ENV_FILE="${MAIL_ENV_FILE:-/etc/vitaqueen-mail.env}"
+DKIM_DIR=/var/lib/rspamd/dkim
+MTA_STS_POLICY=/var/www/mta-sts/mta-sts.txt
+
+BOLD=$'\e[1m'; DIM=$'\e[2m'; YELLOW=$'\e[33m'; RESET=$'\e[0m'
+warn() { printf '%s !! %s%s\n' "$YELLOW" "$1" "$RESET" >&2; }
+
+[[ -r "$ENV_FILE" ]] || { echo "$ENV_FILE not found. Run install-mail.sh first." >&2; exit 1; }
+# shellcheck disable=SC1090
+source "$ENV_FILE"
+
+public_ip() {
+  local ip
+  ip="$(curl -fsS --max-time 5 https://api.ipify.org 2>/dev/null || true)"
+  [[ -z "$ip" ]] && ip="$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}' || true)"
+  printf '%s' "${ip:-<this-host-ipv4>}"
+}
+
+# rspamadm writes the public half as a multi-line, quoted TXT record. DNS
+# panels want one string; this reassembles it without introducing the spaces
+# that would silently invalidate the key.
+dkim_value() {
+  local file="$1"
+  [[ -r "$file" ]] || { printf '<missing: %s>' "$file"; return; }
+  local value
+  value="$(grep -o '"[^"]*"' "$file" 2>/dev/null | tr -d '"\n' | sed 's/[[:space:]]\{2,\}/ /g' || true)"
+  [[ -n "$value" ]] && printf '%s' "$value" || printf '<missing: %s>' "$file"
+}
+
+# The policy's id must change whenever the policy does, or senders keep serving
+# themselves the cached copy. Deriving it from the file's mtime makes that
+# automatic instead of remembered.
+mta_sts_id() {
+  if [[ -r "$MTA_STS_POLICY" ]]; then
+    date -r "$MTA_STS_POLICY" -u +%Y%m%d%H%M%S
+  else
+    date -u +%Y%m%d%H%M%S
+  fi
+}
+
+IP="$(public_ip)"
+STS_ID="$(mta_sts_id)"
+DKIM_MAIL="$(dkim_value "$DKIM_DIR/$MAIL_DOMAIN.mail.key.pub")"
+DKIM_APP=""
+[[ "${APP_PLANE:-no}" == "yes" ]] && DKIM_APP="$(dkim_value "$DKIM_DIR/$BOUNCE_DOMAIN.app.key.pub")"
+
+if [[ "${1:-}" == "--zone" ]]; then
+  cat <<ZONE
+; --- $MAIL_DOMAIN — mail -------------------------------------------------
+${MAIL_HOSTNAME}.            IN A     ${IP}
+${MAIL_DOMAIN}.              IN MX    10 ${MAIL_HOSTNAME}.
+${MAIL_DOMAIN}.              IN TXT   "v=spf1 mx -all"
+mail._domainkey.${MAIL_DOMAIN}. IN TXT ( "${DKIM_MAIL}" )
+_dmarc.${MAIL_DOMAIN}.       IN TXT   "v=DMARC1; p=none; sp=none; adkim=r; aspf=r; fo=1; rua=mailto:dmarc@${MAIL_DOMAIN}"
+_mta-sts.${MAIL_DOMAIN}.     IN TXT   "v=STSv1; id=${STS_ID}"
+mta-sts.${MAIL_DOMAIN}.      IN A     ${IP}
+_smtp._tls.${MAIL_DOMAIN}.   IN TXT   "v=TLSRPTv1; rua=mailto:tlsrpt@${MAIL_DOMAIN}"
+webmail.${MAIL_DOMAIN}.      IN A     ${IP}
+autoconfig.${MAIL_DOMAIN}.   IN CNAME ${MAIL_HOSTNAME}.
+autodiscover.${MAIL_DOMAIN}. IN CNAME ${MAIL_HOSTNAME}.
+_submissions._tcp.${MAIL_DOMAIN}. IN SRV 0 1 465 ${MAIL_HOSTNAME}.
+_imaps._tcp.${MAIL_DOMAIN}.  IN SRV 0 1 993 ${MAIL_HOSTNAME}.
+ZONE
+  if [[ -n "$DKIM_APP" ]]; then
+    cat <<ZONE
+${BOUNCE_DOMAIN}.            IN MX    10 ${MAIL_HOSTNAME}.
+${BOUNCE_DOMAIN}.            IN TXT   "v=spf1 mx -all"
+app._domainkey.${BOUNCE_DOMAIN}. IN TXT ( "${DKIM_APP}" )
+ZONE
+  fi
+  exit 0
+fi
+
+printf '\n%sDNS for %s%s\n' "$BOLD" "$MAIL_DOMAIN" "$RESET"
+printf '%sEvery row. A mail server with four of these five records is a mail server that half works.%s\n\n' "$DIM" "$RESET"
+
+row() { printf '  %-34s %-6s %s\n' "$1" "$2" "$3"; }
+
+printf '%s  Host / address%s\n' "$BOLD" "$RESET"
+row "$MAIL_HOSTNAME" A "$IP"
+row "mta-sts.$MAIL_DOMAIN" A "$IP"
+row "webmail.$MAIL_DOMAIN" A "$IP"
+row "autoconfig.$MAIL_DOMAIN" CNAME "$MAIL_HOSTNAME"
+row "autodiscover.$MAIL_DOMAIN" CNAME "$MAIL_HOSTNAME"
+printf '\n%s  Routing%s\n' "$BOLD" "$RESET"
+row "$MAIL_DOMAIN" MX "10 $MAIL_HOSTNAME"
+printf '\n%s  Authentication%s\n' "$BOLD" "$RESET"
+row "$MAIL_DOMAIN" TXT "v=spf1 mx -all"
+row "mail._domainkey.$MAIL_DOMAIN" TXT "$DKIM_MAIL"
+row "_dmarc.$MAIL_DOMAIN" TXT "v=DMARC1; p=none; sp=none; adkim=r; aspf=r; fo=1; rua=mailto:dmarc@$MAIL_DOMAIN"
+printf '\n%s  Transport security%s\n' "$BOLD" "$RESET"
+row "_mta-sts.$MAIL_DOMAIN" TXT "v=STSv1; id=$STS_ID"
+row "_smtp._tls.$MAIL_DOMAIN" TXT "v=TLSRPTv1; rua=mailto:tlsrpt@$MAIL_DOMAIN"
+printf '\n%s  Client auto-setup%s\n' "$BOLD" "$RESET"
+row "_submissions._tcp.$MAIL_DOMAIN" SRV "0 1 465 $MAIL_HOSTNAME"
+row "_imaps._tcp.$MAIL_DOMAIN" SRV "0 1 993 $MAIL_HOSTNAME"
+
+if [[ -n "$DKIM_APP" ]]; then
+  printf '\n%s  Application plane (%s)%s\n' "$BOLD" "$BOUNCE_DOMAIN" "$RESET"
+  row "$BOUNCE_DOMAIN" MX "10 $MAIL_HOSTNAME"
+  row "$BOUNCE_DOMAIN" TXT "v=spf1 mx -all"
+  row "app._domainkey.$BOUNCE_DOMAIN" TXT "$DKIM_APP"
+fi
+
+printf '\n%s  Names that must never send or receive%s\n' "$BOLD" "$RESET"
+printf '%s  An unclaimed subdomain is what a spoofer reaches for. Publish these for every%s\n' "$DIM" "$RESET"
+printf '%s  hostname you own that is not mail — api, media, www, staging.%s\n\n' "$DIM" "$RESET"
+row "<name>.$MAIL_DOMAIN" MX "0 ."
+row "<name>.$MAIL_DOMAIN" TXT "v=spf1 -all"
+
+cat <<NEXT
+
+  ${BOLD}Then${RESET}
+    ${DIM}# publish everything above, wait for the TTL, and verify${RESET}
+    mail-check
+
+  ${BOLD}Not in DNS, and not optional${RESET}
+    The PTR record for ${IP} must resolve to ${MAIL_HOSTNAME}.
+    Only your hosting provider can set it — usually in the panel next to the IP.
+
+NEXT
+
+[[ "$DKIM_MAIL" == *"<missing"* ]] && warn "The DKIM key is missing. Re-run install-mail.sh."
+exit 0

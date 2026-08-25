@@ -1,0 +1,7 @@
+[Unit]
+Description=Enforce the mailbox retention window on the role mailboxes
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/mail-expunge
+Nice=15

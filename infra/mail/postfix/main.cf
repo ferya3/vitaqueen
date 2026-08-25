@@ -1,0 +1,177 @@
+# ---------------------------------------------------------------------------
+# Postfix — VitaQueen mail host
+#
+# Rendered from infra/mail/postfix/main.cf by install-mail.sh, which fills the
+# placeholders in from mail.env. Edit the template and re-run the installer
+# rather than editing /etc/postfix/main.cf, or the next run will quietly
+# disagree with you.
+#
+# Architecture and the reasoning behind every choice here: docs/email.md.
+# ---------------------------------------------------------------------------
+
+compatibility_level = 3.6
+
+# --- Identity --------------------------------------------------------------
+# myhostname is what this server calls itself in HELO. It must match the PTR
+# record of the sending IP, or Gmail and Outlook both mark the mail down before
+# they have read a single header.
+myhostname = __MAIL_HOSTNAME__
+myorigin = /etc/mailname
+smtputf8_enable = yes
+
+# Empty on purpose. Nothing is delivered "locally" to a Unix account; every
+# mailbox is virtual and every delivery goes to Dovecot over LMTP. A non-empty
+# mydestination is how mail for root@ ends up in a file nobody reads.
+mydestination =
+local_recipient_maps =
+local_transport = error:local delivery is disabled on this host
+
+# 127/8 only. Every wider value here is a step towards an open relay, and
+# "the office range" is exactly how one is created by accident.
+mynetworks = 127.0.0.0/8 [::1]/128
+
+inet_interfaces = all
+inet_protocols = __INET_PROTOCOLS__
+biff = no
+append_dot_mydomain = no
+readme_directory = no
+
+# --- Virtual delivery ------------------------------------------------------
+virtual_mailbox_domains = __MAIL_DOMAIN__ __BOUNCE_DOMAIN__
+virtual_mailbox_maps = hash:/etc/postfix/vmailbox
+virtual_alias_maps = hash:/etc/postfix/virtual_alias
+virtual_transport = lmtp:unix:private/dovecot-lmtp
+
+# Dovecot enforces the quota; Postfix must not impose a second, different one.
+virtual_mailbox_limit = 0
+mailbox_size_limit = 0
+
+# 50 MB accepted, which after base64 is roughly a 35 MB attachment. Certificates
+# and analysis PDFs fit; nothing sane needs more, and every megabyte above this
+# is queue disk you have to have.
+message_size_limit = __MESSAGE_SIZE_LIMIT__
+
+# --- Authentication (submission only; see master.cf) -----------------------
+smtpd_sasl_type = dovecot
+smtpd_sasl_path = private/auth
+smtpd_sasl_auth_enable = no
+smtpd_sasl_security_options = noanonymous
+smtpd_sasl_local_domain = $myhostname
+smtpd_tls_auth_only = yes
+broken_sasl_auth_clients = no
+
+# Which login may use which envelope sender. Enforced by
+# reject_sender_login_mismatch below, and it is the reason a leaked application
+# password cannot send as sales@.
+smtpd_sender_login_maps = hash:/etc/postfix/sender_login
+
+# --- TLS, inbound ----------------------------------------------------------
+smtpd_tls_cert_file = /etc/letsencrypt/live/__MAIL_HOSTNAME__/fullchain.pem
+smtpd_tls_key_file = /etc/letsencrypt/live/__MAIL_HOSTNAME__/privkey.pem
+
+# `may`, not `encrypt`. On port 25 this is opportunistic by design: demanding
+# TLS from every sending server silently loses mail from the ones that do not
+# offer it, and there is no bounce to tell you it happened. MTA-STS is how you
+# get guaranteed TLS from the senders that support it, without punishing the
+# ones that do not.
+smtpd_tls_security_level = may
+smtpd_tls_protocols = >=TLSv1.2
+smtpd_tls_mandatory_protocols = >=TLSv1.2
+smtpd_tls_mandatory_ciphers = medium
+smtpd_tls_loglevel = 1
+smtpd_tls_received_header = yes
+smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
+tls_preempt_cipherlist = no
+tls_ssl_options = NO_COMPRESSION, NO_RENEGOTIATION
+
+# --- TLS, outbound ---------------------------------------------------------
+smtp_tls_security_level = may
+smtp_tls_protocols = >=TLSv1.2
+smtp_tls_mandatory_protocols = >=TLSv1.2
+smtp_tls_CApath = /etc/ssl/certs
+smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
+smtp_tls_loglevel = 1
+smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
+
+# Honour the recipient's published MTA-STS policy. The socketmap is
+# postfix-mta-sts-resolver; if it is not installed the installer comments this
+# out and leaves the static table below, which still works — it just cannot
+# discover policies on its own.
+smtp_tls_policy_maps = socketmap:inet:127.0.0.1:8461:postfix, hash:/etc/postfix/tls_policy
+
+# --- Restrictions ----------------------------------------------------------
+smtpd_helo_required = yes
+strict_rfc821_envelopes = yes
+disable_vrfy_command = yes
+smtpd_delay_reject = yes
+show_user_unknown_table_name = no
+
+smtpd_client_restrictions =
+    permit_mynetworks
+    permit_sasl_authenticated
+
+smtpd_helo_restrictions =
+    permit_mynetworks
+    permit_sasl_authenticated
+    reject_invalid_helo_hostname
+    reject_non_fqdn_helo_hostname
+
+# reject_sender_login_mismatch comes first so it applies to authenticated
+# clients too — after permit_sasl_authenticated it would never be reached.
+# It also rejects outside mail forged as one of our own addresses, which is
+# what SPF -all promises anyway.
+smtpd_sender_restrictions =
+    permit_mynetworks
+    reject_sender_login_mismatch
+    permit_sasl_authenticated
+    reject_non_fqdn_sender
+    reject_unknown_sender_domain
+
+smtpd_relay_restrictions =
+    permit_mynetworks
+    permit_sasl_authenticated
+    reject_unauth_destination
+
+# reject_unlisted_recipient is what makes "no catch-all" real: an address that
+# is not in vmailbox or virtual_alias is refused during the SMTP conversation,
+# so the sending server reports the failure to its own user. Accepting first
+# and bouncing later is how a server becomes a backscatter source.
+smtpd_recipient_restrictions =
+    permit_mynetworks
+    permit_sasl_authenticated
+    reject_non_fqdn_recipient
+    reject_unknown_recipient_domain
+    reject_unlisted_recipient
+    permit
+
+smtpd_data_restrictions = reject_unauth_pipelining
+smtpd_reject_unlisted_recipient = yes
+smtpd_reject_unlisted_sender = yes
+
+# Slow down the address-guessing clients rather than the real ones.
+smtpd_error_sleep_time = 5s
+smtpd_soft_error_limit = 3
+smtpd_hard_error_limit = 10
+smtpd_client_connection_count_limit = 20
+smtpd_client_connection_rate_limit = 60
+anvil_rate_time_unit = 60s
+
+# --- Milter (Rspamd: spam scoring, DKIM/ARC signing, rate limits) -----------
+smtpd_milters = inet:127.0.0.1:11332
+non_smtpd_milters = $smtpd_milters
+milter_protocol = 6
+milter_mail_macros = i {mail_addr} {client_addr} {client_name} {auth_authen}
+
+# tempfail, not accept. Rspamd signs outbound mail with DKIM; if it is down and
+# Postfix carries on regardless, every message leaves unsigned and fails DMARC
+# at the far end. A four-minute deferral is cheaper than an afternoon of mail
+# that arrives looking forged.
+milter_default_action = tempfail
+
+# --- Queue -----------------------------------------------------------------
+maximal_queue_lifetime = 5d
+bounce_queue_lifetime = 1d
+delay_warning_time = 4h
+maximal_backoff_time = 1h
+minimal_backoff_time = 5m
+queue_run_delay = 5m

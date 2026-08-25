@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+#
+# mail-backup — take the backup, and prove it can be restored.
+#
+#   mail-backup                 snapshot + prune
+#   mail-backup --check         snapshot + integrity check
+#   mail-backup --restore-test  restore a file from the latest snapshot
+#
+# Losing the DKIM private key costs you a new selector. Losing /var/vmail costs
+# you every piece of correspondence the business has ever had. They are backed
+# up together and neither is optional.
+#
+# Configure the destination in /etc/vitaqueen-mail-backup.env:
+#   export RESTIC_REPOSITORY="s3:https://…/vitaqueen-mail"   (or sftp:, rest:, …)
+#   export RESTIC_PASSWORD_FILE="/root/.restic-password"
+#   export AWS_ACCESS_KEY_ID=…  AWS_SECRET_ACCESS_KEY=…
+#
+# The repository must not live on this host. A backup on the machine it is
+# backing up is, as docs/security.md puts it about the database, the safe key
+# inside the safe.
+
+set -Eeuo pipefail
+
+BACKUP_ENV="${MAIL_BACKUP_ENV:-/etc/vitaqueen-mail-backup.env}"
+DIM=$'\e[2m'; GREEN=$'\e[32m'; YELLOW=$'\e[33m'; RED=$'\e[31m'; RESET=$'\e[0m'
+info() { printf '%s    %s%s\n' "$DIM" "$1" "$RESET"; }
+ok()   { printf '%s  ✓ %s%s\n' "$GREEN" "$1" "$RESET"; }
+warn() { printf '%s !! %s%s\n' "$YELLOW" "$1" "$RESET"; }
+die()  { printf '%s !! %s%s\n' "$RED" "$1" "$RESET" >&2; exit 1; }
+
+command -v restic >/dev/null || die "restic is not installed: apt install restic"
+[[ -r "$BACKUP_ENV" ]] || die "$BACKUP_ENV not found. See the header of this script."
+# shellcheck disable=SC1090
+source "$BACKUP_ENV"
+[[ -n "${RESTIC_REPOSITORY:-}" ]] || die "RESTIC_REPOSITORY is not set in $BACKUP_ENV"
+
+PATHS=(
+  /var/vmail              # the mail itself
+  /etc/dovecot            # accounts and their password hashes
+  /etc/postfix            # maps, including who may send as what
+  /etc/rspamd             # thresholds and module configuration
+  /var/lib/rspamd/dkim    # the private keys — without these, a key rotation
+  /etc/letsencrypt        # certificates and renewal configuration
+  /etc/vitaqueen-mail.env
+)
+
+case "${1:-}" in
+  --restore-test)
+    # A backup nobody has restored is a hypothesis. This proves the repository
+    # opens, the snapshot is readable, and the data inside it is real.
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' EXIT
+    restic restore latest --target "$tmp" --include /etc/vitaqueen-mail.env
+    if [[ -s "$tmp/etc/vitaqueen-mail.env" ]]; then
+      ok "Restored /etc/vitaqueen-mail.env from the latest snapshot"
+      info "$(wc -l < "$tmp/etc/vitaqueen-mail.env") lines, readable"
+    else
+      die "The restore produced nothing. The backup is not a backup."
+    fi
+    exit 0
+    ;;
+esac
+
+restic snapshots >/dev/null 2>&1 || {
+  warn "Repository not initialised — initialising it now."
+  restic init
+}
+
+# Dovecot writes Maildirs atomically (new file, then rename), so a live backup
+# is consistent per message. There is no snapshot dance to do here.
+restic backup --verbose=0 --exclude-caches --tag mail "${PATHS[@]}"
+ok "Snapshot taken"
+
+restic forget --prune \
+  --keep-daily 14 --keep-weekly 8 --keep-monthly 12 --keep-yearly 3 \
+  --tag mail
+ok "Old snapshots pruned"
+
+if [[ "${1:-}" == "--check" ]]; then
+  restic check --read-data-subset=5%
+  ok "Integrity check passed"
+fi
+
+restic snapshots --tag mail --latest 1

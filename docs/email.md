@@ -7,6 +7,9 @@ either of them.
 This document is the architecture. It states what runs where, what each piece
 is responsible for, and — where a choice was made — what the alternative cost.
 
+It is also built: [`infra/mail/`](../infra/mail/) is this architecture as
+configuration files and an installer, for any domain.
+
 ## Three flows, not one
 
 "Set up a mail server" is three different systems wearing one name. They have
@@ -185,6 +188,38 @@ Two options, and the smaller one is right here:
 **Start with files.** The application's MySQL is on another host and must stay
 there; adding a database to the mail host to store fifteen rows is a service to
 back up, patch and monitor for no return.
+
+## Building it
+
+`infra/mail/` is this document as files. One machine, two passes:
+
+```bash
+cp mail.env.example mail.env && $EDITOR mail.env
+sudo ./install-mail.sh      # packages, DKIM keys, and the DNS records to publish
+#   … publish them, set the PTR record …
+sudo ./install-mail.sh      # certificates, configuration, first mailbox
+mail-check                  # verify all of it
+```
+
+The first pass stops once it has printed the DNS, because no certificate can be
+issued for a name that does not resolve. The installer is idempotent: it never
+regenerates a DKIM key, resets a password or overwrites `mail.env`, and any
+file it replaces is copied aside first.
+
+Afterwards there are five commands in `/usr/local/sbin`:
+
+| Command | What it does |
+| --- | --- |
+| `mailbox` | Accounts, aliases, quotas, and who may send as what — keeping Dovecot's user list and Postfix's two maps in agreement, which is the thing that goes wrong when it is done by hand |
+| `dns-records` | Every record this server needs, with the live DKIM keys filled in |
+| `mail-check` | Ports, TLS, DNS, PTR, and whether the server relays for strangers |
+| `mail-expunge` | The retention sweep described below |
+| `mail-backup` | restic to off-site storage, with `--restore-test` |
+
+Everything in `infra/mail/` is templated on `mail.env`, so it builds a mail
+server for any domain — the factory's or a personal one. The Postfix, Dovecot,
+Rspamd and Sieve configuration there parses under the versions Ubuntu 24.04
+ships; `infra/mail/README.md` says which, and what was checked.
 
 ## Names, ports and the firewall
 
@@ -523,8 +558,8 @@ Each phase has an exit criterion. Do not start the next one until it is met.
 | Phase | Work | Done when |
 | --- | --- | --- |
 | **0 · Prove the ground** | Provision the host. Confirm dedicated IPv4, PTR set, port 25 open outbound, IP not already on a blocklist. | A test message from the raw host reaches a Gmail inbox at all. |
-| **1 · Build** | Postfix, Dovecot, Rspamd, Redis, ClamAV, certbot, Roundcube. No MX record yet. | Send and receive on the host by IP; `openssl s_client` clean on 465, 587, 993. |
-| **2 · Authenticate** | Publish A, SPF, both DKIM selectors, DMARC `p=none` with `rua`, TLS-RPT, null MX on non-mail names. Lower TTLs first. | A test to a mail-check service scores SPF, DKIM and DMARC all `pass`, and aligned. |
+| **1 · Build** | `install-mail.sh`, first pass: packages, DKIM keys, and the record list. | The installer stops of its own accord and prints the DNS. |
+| **2 · Authenticate** | Publish what `dns-records` printed — A, SPF, both DKIM selectors, DMARC `p=none` with `rua`, TLS-RPT, null MX on non-mail names. Lower TTLs first. Set the PTR. Then the second pass. | `mail-check` is green, and a test to a mail-check service scores SPF, DKIM and DMARC all `pass`, and aligned. |
 | **3 · Cut over** | Publish the MX. Watch the logs. | Real mail arrives; nothing in `postqueue -p`. |
 | **4 · Move the people** | Create mailboxes, set up clients, publish autoconfig/autodiscover, migrate existing mail with `imapsync` if there is any. | Staff are reading and replying from the new mailboxes for a week. |
 | **5 · Move the application** | Point `apps/api/.env` at the mail host, start the queue worker, submit a real contact form in each locale. | The enquiry lands in the right mailbox and `failed_jobs` is empty. |
@@ -545,7 +580,7 @@ exercise, left on the table.
 | **DANE / TLSA** | Explained above: needs DNSSEC plus rollover automation. MTA-STS first. |
 | **BIMI** | Requires `p=reject` in place and a Verified Mark Certificate, which needs a registered trademark. Revisit after phase 6, as marketing. |
 | **A second MX or a cluster** | Explained above. Two hosts double the patching and halve nobody's downtime at this size. |
-| **The application code changes** | The retention fix and the pointer-not-payload notification are described, not implemented. They are behaviour changes and belong in their own commit. |
+| **The application code changes** | The mailbox half of the retention fix is built (`mail-expunge`, on a monthly timer). The application half — a notification that carries a reference rather than the whole enquiry — is described, not implemented: it is a behaviour change and belongs in its own commit. |
 
 ## Checklist
 
