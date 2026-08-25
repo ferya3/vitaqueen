@@ -106,6 +106,7 @@ cd apps/api && ./vendor/bin/pint --test && php artisan test
 | [docs/design-system.md](docs/design-system.md) | Colour, type, spacing, components, RTL |
 | [docs/motion-map.md](docs/motion-map.md) | Every animation: where it lives, what it costs, how it degrades |
 | [docs/security.md](docs/security.md) | The full posture, app and infrastructure, including what is *not* done here |
+| [docs/email.md](docs/email.md) | The mail server: stack, DNS, identity split, rollout and runbook |
 | [docs/api.md](docs/api.md) | Endpoint reference and payload shapes |
 
 ## Before this goes live
