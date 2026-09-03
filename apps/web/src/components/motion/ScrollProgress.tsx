@@ -35,10 +35,10 @@ export function ScrollProgress() {
   }, []);
 
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-white/10">
+    <div aria-hidden className="pointer-events-none absolute inset-x-6 bottom-0 h-px bg-ink-900/8">
       <div
         ref={ref}
-        className="h-full origin-[left_center] bg-aqua-400 rtl:origin-[right_center]"
+        className="h-full origin-[left_center] bg-aqua-500 rtl:origin-[right_center]"
         style={{ transform: 'scaleX(0)' }}
       />
     </div>

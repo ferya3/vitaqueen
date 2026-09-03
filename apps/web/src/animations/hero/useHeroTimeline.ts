@@ -82,23 +82,19 @@ export function useHeroTimeline<T extends HTMLElement = HTMLDivElement>() {
           '-=0.3',
         );
 
-      // Scroll-out: the hero recedes rather than simply scrolling away.
-      gsap.to(root.querySelector('[data-hero-inner]'), {
-        yPercent: -12,
-        opacity: 0.15,
+      // Scroll-out. The hero is no longer a full-viewport band pinned to the
+      // top of the document, so it must not start fading the moment the page
+      // loads: the trigger begins once the block's *bottom* enters the
+      // viewport, and the media drifts rather than the copy disappearing.
+      gsap.to(root.querySelector('[data-hero-media]'), {
+        yPercent: -6,
         ease: 'none',
         scrollTrigger: {
           trigger: root,
-          start: 'top top',
+          start: 'bottom bottom',
           end: 'bottom top',
           scrub: 0.5,
         },
-      });
-
-      gsap.to(root.querySelector('[data-hero-media]'), {
-        scale: 1.12,
-        ease: 'none',
-        scrollTrigger: { trigger: root, start: 'top top', end: 'bottom top', scrub: 0.5 },
       });
 
       // Pointer parallax, driven off GSAP's ticker so it shares one rAF loop.

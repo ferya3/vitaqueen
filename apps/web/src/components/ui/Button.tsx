@@ -9,19 +9,21 @@ type Variant = 'primary' | 'secondary' | 'ghost' | 'light';
 type Size = 'sm' | 'md' | 'lg';
 
 const base =
-  'group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-pill font-medium transition-colors duration-(--duration-fast) disabled:pointer-events-none disabled:opacity-50';
+  'group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-pill font-semibold transition-[background-color,border-color,color,box-shadow,transform] duration-(--duration-fast) disabled:pointer-events-none disabled:opacity-50';
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-abyss-900 text-mist-50 hover:bg-abyss-800',
-  secondary: 'border border-abyss-900/15 bg-transparent text-abyss-900 hover:border-abyss-900/40',
-  ghost: 'text-abyss-900 hover:text-aqua-700',
-  light: 'bg-mist-50 text-abyss-900 hover:bg-white',
+  // The one saturated fill in the system. Everything else defers to it.
+  primary: 'bg-aqua-500 text-white shadow-float hover:bg-aqua-600 active:translate-y-px',
+  // Glass, so it sits on the aurora instead of punching a hole in it.
+  secondary: 'glass text-heading hover:-translate-y-0.5 hover:shadow-float active:translate-y-0',
+  ghost: 'text-ink-700 hover:bg-ink-900/6 hover:text-heading',
+  light: 'bg-white text-heading shadow-press hover:bg-ground-50',
 };
 
 const sizes: Record<Size, string> = {
   sm: 'h-9 px-4 text-sm',
   md: 'h-11 px-6 text-sm',
-  lg: 'h-14 px-8 text-base',
+  lg: 'h-13 px-7 text-base',
 };
 
 type CommonProps = {

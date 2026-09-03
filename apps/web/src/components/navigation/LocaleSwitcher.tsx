@@ -14,13 +14,7 @@ const labels: Record<Locale, string> = {
   ru: 'Русский',
 };
 
-export function LocaleSwitcher({
-  tone = 'light',
-  label,
-}: {
-  tone?: 'light' | 'dark';
-  label: string;
-}) {
+export function LocaleSwitcher({ label }: { label: string }) {
   const active = useLocale() as Locale;
   const pathname = usePathname();
   const router = useRouter();
@@ -46,10 +40,7 @@ export function LocaleSwitcher({
         aria-label={label}
         disabled={pending}
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-pill px-3 py-2 text-sm transition-colors',
-          tone === 'light'
-            ? 'text-mist-200 hover:text-white'
-            : 'text-abyss-700 hover:text-abyss-900',
+          'inline-flex items-center gap-1.5 rounded-pill px-3 py-2 text-sm font-medium text-ink-600 transition-colors hover:bg-ink-900/5 hover:text-heading',
           pending && 'opacity-60',
         )}
       >
@@ -59,14 +50,7 @@ export function LocaleSwitcher({
       </button>
 
       {open ? (
-        <ul
-          className={cn(
-            'absolute end-0 top-full z-50 mt-2 min-w-[10rem] overflow-hidden rounded-md border py-1 shadow-lift',
-            tone === 'light'
-              ? 'border-white/10 bg-abyss-900/95 backdrop-blur'
-              : 'border-line bg-white',
-          )}
-        >
+        <ul className="glass-strong absolute end-0 top-[calc(100%+0.5rem)] z-50 min-w-40 overflow-hidden rounded-lg p-1.5">
           {locales.map((locale) => (
             <li key={locale}>
               <button
@@ -75,11 +59,8 @@ export function LocaleSwitcher({
                 dir={locale === 'fa' || locale === 'ar' ? 'rtl' : 'ltr'}
                 onClick={() => switchTo(locale)}
                 className={cn(
-                  'block w-full px-4 py-2 text-start text-sm transition-colors',
-                  tone === 'light'
-                    ? 'text-mist-200 hover:bg-white/10'
-                    : 'text-abyss-800 hover:bg-mist-100',
-                  locale === active && 'text-aqua-400',
+                  'block w-full rounded-md px-3 py-2 text-start text-sm transition-colors hover:bg-aqua-500/10',
+                  locale === active ? 'font-semibold text-aqua-700' : 'text-ink-600',
                 )}
               >
                 {labels[locale]}

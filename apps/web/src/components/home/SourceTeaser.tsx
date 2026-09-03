@@ -2,14 +2,19 @@ import { getTranslations } from 'next-intl/server';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { ButtonLink } from '@/components/ui/Button';
 import { ArrowIcon } from '@/components/ui/Icons';
+import { SectionHead } from '@/components/ui/Section';
 import { MineralChart } from '@/components/source/MineralChart';
 import { SourceMap } from '@/components/source/SourceMap';
-import { TextReveal } from '@/components/motion/TextReveal';
 import { SeedNotice } from '@/components/ui/SeedNotice';
 import { formatNumber } from '@/lib/format';
 import type { Locale } from '@/i18n/routing';
 import type { SourceProfile } from '@/types/content';
 
+/**
+ * The source, in one screen: the claim, six measured facts, the catchment
+ * diagram and the mineral signature. Everything here is a number someone can
+ * be held to — which is why nothing on this page is a decorative superlative.
+ */
 export async function SourceTeaser({
   locale,
   profile,
@@ -25,42 +30,42 @@ export async function SourceTeaser({
   const common = await getTranslations({ locale, namespace: 'common' });
 
   return (
-    <section className="relative overflow-hidden bg-abyss-950 text-mist-100 section-y" id="source">
-      <div className="shell grid gap-16 lg:grid-cols-2 lg:items-center">
-        <div>
-          <Eyebrow tone="light">{t('eyebrow')}</Eyebrow>
-          <TextReveal as="h2" className="mt-6 font-display text-4xl leading-tight text-white">
-            {t('title')}
-          </TextReveal>
-          <p className="mt-5 max-w-md leading-relaxed text-mist-400 sm:mt-6 sm:text-lg">{t('body')}</p>
-
-          <dl className="mt-10 grid grid-cols-2 gap-x-10 gap-y-6 sm:grid-cols-3">
-            <Fact label={facts('altitude')} value={`${formatNumber(profile.altitudeMeters, locale)} m`} />
-            <Fact label={facts('ph')} value={formatNumber(profile.ph, locale)} />
-            <Fact label={facts('tds')} value={`${formatNumber(profile.tds, locale)} mg/L`} />
-            <Fact label={facts('temperature')} value={`${formatNumber(profile.temperatureC, locale)} °C`} />
-            <Fact label={facts('hardness')} value={`${formatNumber(profile.hardness, locale)} mg/L`} />
-            <Fact label={facts('type')} value={profile.sourceType} />
-          </dl>
-
-          <ButtonLink href="/source" variant="light" className="mt-10">
-            {t('cta')}
-            <ArrowIcon />
-          </ButtonLink>
-        </div>
-
-        <div className="grid gap-10">
-          <SourceMap
-            altitude={`${formatNumber(profile.altitudeMeters, locale)} m`}
-            className="aspect-16/10"
-          />
-          <MineralChart minerals={profile.minerals.slice(0, 6)} tone="light" />
-          {seeded ? (
-            <SeedNotice
-              message={common('sampleData')}
-              className="border-white/20 bg-white/5 text-mist-400"
+    <section className="shell section-y scroll-mt-24" id="source">
+      <div className="glass-strong overflow-hidden rounded-2xl p-6 sm:p-9">
+        <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
+          <div className="flex flex-col">
+            <SectionHead
+              eyebrow={<Eyebrow>{t('eyebrow')}</Eyebrow>}
+              title={t('title')}
+              lede={t('body')}
             />
-          ) : null}
+
+            <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+              <Fact label={facts('altitude')} value={`${formatNumber(profile.altitudeMeters, locale)} m`} />
+              <Fact label={facts('ph')} value={formatNumber(profile.ph, locale)} />
+              <Fact label={facts('tds')} value={`${formatNumber(profile.tds, locale)} mg/L`} />
+              <Fact label={facts('temperature')} value={`${formatNumber(profile.temperatureC, locale)} °C`} />
+              <Fact label={facts('hardness')} value={`${formatNumber(profile.hardness, locale)} mg/L`} />
+              <Fact label={facts('type')} value={profile.sourceType} />
+            </dl>
+
+            <div className="mt-6">
+              <ButtonLink href="/source" variant="primary">
+                {t('cta')}
+                <ArrowIcon />
+              </ButtonLink>
+            </div>
+
+            {seeded ? <SeedNotice message={common('sampleData')} className="mt-5" /> : null}
+          </div>
+
+          <div className="grid gap-6">
+            <SourceMap
+              altitude={`${formatNumber(profile.altitudeMeters, locale)} m`}
+              className="aspect-16/10"
+            />
+            <MineralChart minerals={profile.minerals.slice(0, 5)} />
+          </div>
         </div>
       </div>
     </section>
@@ -69,9 +74,9 @@ export async function SourceTeaser({
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <dt className="text-xs uppercase tracking-[0.18em] text-mist-500">{label}</dt>
-      <dd className="mt-1.5 font-display text-xl text-aqua-300 tabular">{value}</dd>
+    <div className="min-w-0">
+      <dt className="truncate text-2xs uppercase tracking-[0.14em] text-ink-400">{label}</dt>
+      <dd className="mt-0.5 truncate text-lg font-bold tabular text-heading">{value}</dd>
     </div>
   );
 }

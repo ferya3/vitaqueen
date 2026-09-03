@@ -62,15 +62,15 @@ export default async function FactoryPage({ params }: Props) {
       <ProcessSequence stages={productionStages} />
 
       <Section tone="canvas">
-        <Reveal className="grid gap-px overflow-hidden rounded-lg bg-line sm:grid-cols-2" stagger={0.07}>
+        <Reveal className="grid gap-4 sm:grid-cols-2" stagger={0.07}>
           {detailSections.map((section) => (
-            <RevealItem key={section.id} className="bg-canvas p-8 sm:p-10">
+            <RevealItem key={section.id} className="glass rounded-2xl p-6 sm:p-8">
               <div id={section.id} className="scroll-mt-28">
                 <Eyebrow>{section.label}</Eyebrow>
-                <TextReveal as="h2" className="mt-4 font-display text-2xl text-abyss-900">
+                <TextReveal as="h2" className="mt-3 text-xl sm:text-2xl">
                   {stages(`${section.key}.title`)}
                 </TextReveal>
-                <p className="mt-4 leading-relaxed text-ink-muted">{stages(`${section.key}.body`)}</p>
+                <p className="mt-2.5 leading-relaxed text-ink-500">{stages(`${section.key}.body`)}</p>
               </div>
             </RevealItem>
           ))}

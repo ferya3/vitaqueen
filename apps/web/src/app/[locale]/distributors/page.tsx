@@ -53,7 +53,7 @@ export default async function DistributorsPage({ params }: Props) {
       <Section tone="canvas">
         <Eyebrow>{t('findTitle')}</Eyebrow>
         {distributors.length === 0 ? (
-          <p className="mt-6 max-w-lg rounded-lg border border-dashed border-line px-6 py-8 text-ink-muted">
+          <p className="mt-5 max-w-lg rounded-2xl border border-dashed border-aqua-500/35 bg-aqua-50/60 px-6 py-8 text-ink-500">
             {t('empty')}
           </p>
         ) : (
@@ -76,15 +76,17 @@ export default async function DistributorsPage({ params }: Props) {
       </Section>
 
       <Section tone="mist">
-        <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
-          <div>
+        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12">
+          <div className="glass h-fit rounded-2xl p-6 sm:p-8">
             <Eyebrow>{t('applyTitle')}</Eyebrow>
-            <TextReveal as="h2" className="mt-5 font-display text-3xl text-abyss-900">
+            <TextReveal as="h2" className="mt-4 text-2xl sm:text-3xl">
               {t('applyTitle')}
             </TextReveal>
-            <p className="mt-5 text-lg leading-relaxed text-ink-muted">{t('lead')}</p>
+            <p className="mt-3 leading-relaxed text-ink-500 sm:text-lg">{t('lead')}</p>
           </div>
-          <ContactForm defaultTopic="sales" />
+          <div className="glass-strong rounded-2xl p-6 sm:p-8">
+            <ContactForm defaultTopic="sales" />
+          </div>
         </div>
       </Section>
 

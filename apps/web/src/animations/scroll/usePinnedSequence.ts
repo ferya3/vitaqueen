@@ -11,6 +11,8 @@ type Options = {
   onStep?: (index: number) => void;
   /** Viewport heights of scroll distance allocated per step. */
   distancePerStep?: number;
+  /** ScrollTrigger `start`. Defaults to just below the floating header. */
+  start?: string;
   /** Disable pinning (mobile / reduced motion) and just report steps on enter. */
   enabled?: boolean;
 };
@@ -24,7 +26,8 @@ type Options = {
 export function usePinnedSequence<T extends HTMLElement = HTMLDivElement>({
   steps,
   onStep,
-  distancePerStep = 0.9,
+  distancePerStep = 0.55,
+  start = 'top top+=88',
   enabled = true,
 }: Options) {
   const containerRef = useRef<T>(null);
@@ -61,7 +64,7 @@ export function usePinnedSequence<T extends HTMLElement = HTMLDivElement>({
       gsap.timeline({
         scrollTrigger: {
           trigger: container,
-          start: 'top top',
+          start,
           end: () => `+=${window.innerHeight * distancePerStep * steps}`,
           pin: true,
           scrub: 0.8,
@@ -82,7 +85,7 @@ export function usePinnedSequence<T extends HTMLElement = HTMLDivElement>({
     }, container);
 
     return () => context.revert();
-  }, [steps, distancePerStep, enabled, onStep]);
+  }, [steps, distancePerStep, start, enabled, onStep]);
 
   return containerRef;
 }

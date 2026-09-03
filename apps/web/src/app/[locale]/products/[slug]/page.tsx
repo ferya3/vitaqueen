@@ -92,22 +92,22 @@ export default async function ProductPage({ params }: Props) {
       />
 
       <Section tone="canvas">
-        <div className="grid gap-16 lg:grid-cols-[0.85fr_1.15fr]">
-          <div className="flex items-center justify-center rounded-lg bg-mist-200 p-12">
-            <div className="h-80">
+        <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-12">
+          <div className="glass flex items-center justify-center rounded-2xl p-10 sm:p-12">
+            <div className="h-72 sm:h-80">
               <BottleGlyph volumeMl={product.data.volumeMl} />
             </div>
           </div>
 
-          <div>
+          <div className="glass rounded-2xl p-6 sm:p-8">
             <Eyebrow>{detail('specifications')}</Eyebrow>
-            <dl className="mt-6 grid gap-x-10 gap-y-4 sm:grid-cols-2">
+            <dl className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2">
               {product.data.specs.map((spec) => (
-                <div key={spec.labelKey} className="border-b border-line pb-3">
-                  <dt className="text-xs uppercase tracking-[0.18em] text-ink-muted">
+                <div key={spec.labelKey} className="border-b border-hairline pb-3">
+                  <dt className="text-2xs uppercase tracking-[0.14em] text-ink-400">
                     {specLabels(spec.labelKey)}
                   </dt>
-                  <dd className="mt-1.5 text-lg text-abyss-900 tabular">{spec.value}</dd>
+                  <dd className="mt-1 text-base font-bold tabular text-heading">{spec.value}</dd>
                 </div>
               ))}
             </dl>
@@ -116,7 +116,7 @@ export default async function ProductPage({ params }: Props) {
               <ButtonLink
                 href={product.data.datasheetUrl}
                 variant="secondary"
-                className="mt-8"
+                className="mt-6"
               >
                 <DownloadIcon />
                 {common('downloadDatasheet')}
@@ -127,7 +127,7 @@ export default async function ProductPage({ params }: Props) {
       </Section>
 
       <Section tone="deep">
-        <div className="grid gap-16 lg:grid-cols-2">
+        <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
           <div>
             <Eyebrow tone="light">{detail('minerals')}</Eyebrow>
             <h2 className="mt-5 font-display text-3xl text-white">{t('title')}</h2>
@@ -135,7 +135,7 @@ export default async function ProductPage({ params }: Props) {
             {analysisSeeded ? (
               <SeedNotice
                 message={common('sampleData')}
-                className="mt-8 border-white/20 bg-white/5 text-mist-400"
+                className="mt-8 border-white/20 bg-white/5 text-ink-300"
               />
             ) : null}
           </div>
@@ -149,7 +149,7 @@ export default async function ProductPage({ params }: Props) {
                   key={row.labelKey}
                   className="flex items-baseline justify-between border-b border-white/10 pb-3"
                 >
-                  <dt className="text-mist-400">{nutrition(row.labelKey)}</dt>
+                  <dt className="text-ink-300">{nutrition(row.labelKey)}</dt>
                   <dd className="text-aqua-300 tabular">{row.value}</dd>
                 </div>
               ))}
@@ -157,7 +157,7 @@ export default async function ProductPage({ params }: Props) {
 
             <div className="mt-12">
               <Eyebrow tone="light">{detail('packaging')}</Eyebrow>
-              <p className="mt-4 text-mist-300">{product.data.packaging}</p>
+              <p className="mt-4 text-ground-300">{product.data.packaging}</p>
             </div>
           </div>
         </div>

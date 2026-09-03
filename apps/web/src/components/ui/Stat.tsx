@@ -32,12 +32,21 @@ export function Stat({
   const ref = useCountUp<HTMLSpanElement>(value, format);
 
   return (
-    <div className={cn('flex flex-col gap-2', className)}>
-      <p className={cn('font-display text-4xl tabular', tone === 'light' ? 'text-mist-50' : 'text-abyss-900')}>
+    <div className={cn('flex flex-col gap-1', className)}>
+      <p
+        className={cn(
+          'font-display text-3xl font-bold tabular sm:text-4xl',
+          tone === 'light' ? 'text-ground-50' : 'text-heading',
+        )}
+      >
         <span ref={ref}>{formatNumber(value, locale)}</span>
-        {suffix ? <span className="text-2xl text-aqua-500">{suffix}</span> : null}
+        {suffix ? (
+          <span className={cn('ms-0.5 text-xl', tone === 'light' ? 'text-aqua-300' : 'text-aqua-500')}>
+            {suffix}
+          </span>
+        ) : null}
       </p>
-      <p className={cn('text-sm', tone === 'light' ? 'text-mist-400' : 'text-ink-muted')}>{label}</p>
+      <p className={cn('text-sm', tone === 'light' ? 'text-ink-300' : 'text-ink-500')}>{label}</p>
     </div>
   );
 }

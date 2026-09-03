@@ -59,24 +59,24 @@ export default async function QualityPage({ params }: Props) {
       />
 
       <Section tone="canvas">
-        <div className="grid gap-14 lg:grid-cols-2 lg:gap-20">
-          <div id="control" className="scroll-mt-28">
+        <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
+          <div id="control" className="glass scroll-mt-28 rounded-2xl p-6 sm:p-8">
             <Eyebrow>{nav('qualityControl')}</Eyebrow>
-            <TextReveal as="h2" className="mt-5 font-display text-3xl text-abyss-900">
+            <TextReveal as="h2" className="mt-4 text-2xl sm:text-3xl">
               {t('control.title')}
             </TextReveal>
             <Reveal>
-              <p className="mt-5 text-lg leading-relaxed text-ink-muted">{t('control.body')}</p>
+              <p className="mt-3 leading-relaxed text-ink-500 sm:text-lg">{t('control.body')}</p>
             </Reveal>
           </div>
 
-          <div id="laboratory" className="scroll-mt-28">
+          <div id="laboratory" className="glass scroll-mt-28 rounded-2xl p-6 sm:p-8">
             <Eyebrow>{nav('qualityLaboratory')}</Eyebrow>
-            <TextReveal as="h2" className="mt-5 font-display text-3xl text-abyss-900">
+            <TextReveal as="h2" className="mt-4 text-2xl sm:text-3xl">
               {t('laboratory.title')}
             </TextReveal>
             <Reveal>
-              <p className="mt-5 text-lg leading-relaxed text-ink-muted">{t('laboratory.body')}</p>
+              <p className="mt-3 leading-relaxed text-ink-500 sm:text-lg">{t('laboratory.body')}</p>
             </Reveal>
           </div>
         </div>
@@ -84,43 +84,43 @@ export default async function QualityPage({ params }: Props) {
 
       <Section tone="mist" id="water-analysis">
         <Eyebrow>{nav('qualityAnalysis')}</Eyebrow>
-        <TextReveal as="h2" className="mt-5 font-display text-3xl text-abyss-900">
+        <TextReveal as="h2" className="mt-4 text-2xl sm:text-3xl">
           {t('analysis.title')}
         </TextReveal>
-        <p className="mt-4 max-w-2xl text-ink-muted">{t('analysis.body')}</p>
+        <p className="mt-4 max-w-2xl text-ink-500">{t('analysis.body')}</p>
 
-        <dl className="mt-8 flex flex-wrap gap-x-12 gap-y-3 text-sm">
+        <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-sm">
           <div className="flex gap-2">
-            <dt className="text-ink-muted">{t('table.parameter')}:</dt>
-            <dd className="text-abyss-900">{analysis.samplingPoint}</dd>
+            <dt className="text-ink-500">{t('table.parameter')}:</dt>
+            <dd className="text-ink-900">{analysis.samplingPoint}</dd>
           </div>
           {analysis.sampledAt ? (
             <div className="flex gap-2">
-              <dt className="text-ink-muted">{t('certificateMeta.validUntil')}:</dt>
-              <dd className="text-abyss-900">{formatDate(analysis.sampledAt, locale)}</dd>
+              <dt className="text-ink-500">{t('certificateMeta.validUntil')}:</dt>
+              <dd className="text-ink-900">{formatDate(analysis.sampledAt, locale)}</dd>
             </div>
           ) : null}
           {analysis.laboratory ? (
             <div className="flex gap-2">
-              <dt className="text-ink-muted">{t('certificateMeta.issuer')}:</dt>
-              <dd className="text-abyss-900">{analysis.laboratory}</dd>
+              <dt className="text-ink-500">{t('certificateMeta.issuer')}:</dt>
+              <dd className="text-ink-900">{analysis.laboratory}</dd>
             </div>
           ) : null}
         </dl>
 
-        <div className="mt-8">
+        <div className="mt-6">
           <AnalysisTable analysis={analysis} locale={locale} />
         </div>
 
-        {seeded ? <SeedNotice message={common('sampleData')} className="mt-8" /> : null}
+        {seeded ? <SeedNotice message={common('sampleData')} className="mt-6" /> : null}
       </Section>
 
       <Section tone="canvas" id="certifications">
         <Eyebrow>{nav('qualityCertifications')}</Eyebrow>
-        <TextReveal as="h2" className="mt-5 font-display text-3xl text-abyss-900">
+        <TextReveal as="h2" className="mt-4 text-2xl sm:text-3xl">
           {t('certifications.title')}
         </TextReveal>
-        <p className="mt-4 max-w-2xl text-ink-muted">{t('certifications.body')}</p>
+        <p className="mt-4 max-w-2xl text-ink-500">{t('certifications.body')}</p>
         <div className="mt-10">
           <CertificationGrid certificates={certificates} locale={locale} />
         </div>

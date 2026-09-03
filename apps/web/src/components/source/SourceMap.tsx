@@ -21,20 +21,20 @@ export function SourceMap({
   const t = useTranslations('source.map');
 
   return (
-    <figure className={cn('relative overflow-hidden rounded-lg bg-abyss-950', className)}>
+    <figure className={cn('relative overflow-hidden rounded-xl border border-white/70 bg-aqua-50', className)}>
       <svg viewBox="0 0 900 520" className="h-full w-full" role="img" aria-label={t('title')}>
         <defs>
           <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#0b2e45" />
-            <stop offset="100%" stopColor="#030d18" />
+            <stop offset="0%" stopColor="#eafaff" />
+            <stop offset="100%" stopColor="#c7ecf8" />
           </linearGradient>
           <linearGradient id="ridge" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#1a4a39" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#051424" stopOpacity="0.95" />
+            <stop offset="0%" stopColor="#9fe0c9" stopOpacity="0.95" />
+            <stop offset="100%" stopColor="#63c3dd" stopOpacity="0.9" />
           </linearGradient>
           <linearGradient id="flow" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#79d7f7" />
-            <stop offset="100%" stopColor="#0782ba" />
+            <stop offset="0%" stopColor="#0888ac" />
+            <stop offset="100%" stopColor="#22c9e8" />
           </linearGradient>
         </defs>
 
@@ -46,7 +46,7 @@ export function SourceMap({
         <path d="M0 360 L150 268 L260 330 L380 224 L500 316 L620 252 L760 330 L900 268 V520 H0 Z" fill="url(#ridge)" />
 
         {/* Snow line marks the catchment */}
-        <path d="M330 262 L380 224 L432 262 L400 250 L366 258 Z" fill="#d5f2fd" opacity="0.8" />
+        <path d="M330 262 L380 224 L432 262 L400 250 L366 258 Z" fill="#ffffff" opacity="0.95" />
 
         {/* Water route */}
         <path
@@ -61,26 +61,26 @@ export function SourceMap({
         </path>
 
         {/* Spring marker */}
-        <circle cx="380" cy="230" r="7" fill="#79d7f7" />
-        <circle cx="380" cy="230" r="16" fill="none" stroke="#79d7f7" strokeOpacity="0.5">
+        <circle cx="380" cy="230" r="7" fill="#08abcd" />
+        <circle cx="380" cy="230" r="16" fill="none" stroke="#08abcd" strokeOpacity="0.55">
           <animate attributeName="r" values="10;26;10" dur="3.6s" repeatCount="indefinite" />
           <animate attributeName="stroke-opacity" values="0.6;0;0.6" dur="3.6s" repeatCount="indefinite" />
         </circle>
 
         {/* Plant */}
         <g transform="translate(700 372)">
-          <rect x="0" y="0" width="72" height="34" rx="3" fill="#0d2942" stroke="#3abdee" strokeOpacity="0.5" />
-          <rect x="10" y="-14" width="10" height="16" fill="#0d2942" stroke="#3abdee" strokeOpacity="0.5" />
+          <rect x="0" y="0" width="72" height="34" rx="3" fill="#ffffff" stroke="#0888ac" strokeOpacity="0.7" />
+          <rect x="10" y="-14" width="10" height="16" fill="#ffffff" stroke="#0888ac" strokeOpacity="0.7" />
         </g>
 
-        <g fontSize="13" fill="#b0e7fb" fontFamily="inherit">
+        <g fontSize="13" fill="#154a60" fontFamily="inherit" fontWeight="600">
           <text x="380" y="204" textAnchor="middle">{t('sourcePoint')}</text>
-          <text x="380" y="188" textAnchor="middle" fill="#6b7d8a" fontSize="11" direction="ltr">
+          <text x="380" y="188" textAnchor="middle" fill="#0d6d8b" fontSize="11" fontWeight="500" direction="ltr">
             {altitude}
           </text>
           <text x="736" y="428" textAnchor="middle">{t('plant')}</text>
-          <text x="120" y="182" fill="#4d5c67" fontSize="11">{t('mountains')}</text>
-          <text x="540" y="348" fill="#4d5c67" fontSize="11">{t('journey')}</text>
+          <text x="120" y="182" fill="#4b768a" fontSize="11" fontWeight="500">{t('mountains')}</text>
+          <text x="540" y="348" fill="#4b768a" fontSize="11" fontWeight="500">{t('journey')}</text>
         </g>
       </svg>
       <figcaption className="sr-only">{t('title')}</figcaption>

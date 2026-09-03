@@ -55,17 +55,15 @@ export default async function SustainabilityPage({ params }: Props) {
       />
 
       <Section tone="canvas">
-        <Reveal className="grid gap-px overflow-hidden rounded-lg bg-line sm:grid-cols-2" stagger={0.08}>
+        <Reveal className="grid gap-4 sm:grid-cols-2" stagger={0.08}>
           {PILLARS.map((pillar) => (
-            <RevealItem key={pillar.key} className="bg-canvas p-8 sm:p-12">
+            <RevealItem key={pillar.key} className="glass rounded-2xl p-6 sm:p-8">
               <div id={pillar.anchor} className="scroll-mt-28">
-                <p className="font-display text-4xl text-aqua-500 tabular">
+                <p className="font-display text-3xl font-extrabold tabular text-aqua-500/80">
                   {t(`pillars.${pillar.key}.index`)}
                 </p>
-                <h2 className="mt-5 font-display text-2xl text-abyss-900">
-                  {t(`pillars.${pillar.key}.title`)}
-                </h2>
-                <p className="mt-4 leading-relaxed text-ink-muted">
+                <h2 className="mt-3 text-xl sm:text-2xl">{t(`pillars.${pillar.key}.title`)}</h2>
+                <p className="mt-2.5 leading-relaxed text-ink-500">
                   {t(`pillars.${pillar.key}.body`)}
                 </p>
               </div>
@@ -77,10 +75,10 @@ export default async function SustainabilityPage({ params }: Props) {
       <Section tone="deep">
         <div className="max-w-3xl">
           <Eyebrow tone="light">{t('eyebrow')}</Eyebrow>
-          <TextReveal as="h2" className="mt-5 font-display text-3xl text-white">
+          <TextReveal as="h2" className="mt-4 text-2xl text-white sm:text-3xl">
             {t('metrics.title')}
           </TextReveal>
-          <p className="mt-5 text-lg leading-relaxed text-mist-400">{t('metrics.body')}</p>
+          <p className="mt-3 leading-relaxed text-ink-200 sm:text-lg">{t('metrics.body')}</p>
         </div>
       </Section>
 

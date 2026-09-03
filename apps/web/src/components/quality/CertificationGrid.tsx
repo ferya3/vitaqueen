@@ -24,7 +24,7 @@ export async function CertificationGrid({
 
   if (certificates.length === 0) {
     return (
-      <p className="max-w-lg rounded-lg border border-dashed border-line px-6 py-8 text-ink-muted">
+      <p className="max-w-lg rounded-2xl border border-dashed border-aqua-500/35 bg-aqua-50/60 px-6 py-8 text-ink-500">
         {t('empty')}
       </p>
     );
@@ -35,7 +35,7 @@ export async function CertificationGrid({
       {certificates.map((certificate) => (
         <li key={certificate.id}>
           <Card className="flex h-full flex-col">
-            <h3 className="font-display text-xl text-abyss-900">{certificate.title}</h3>
+            <h3 className="font-display text-xl text-ink-900">{certificate.title}</h3>
             <dl className="mt-5 grid gap-2.5 text-sm">
               <Row label={meta('issuer')} value={certificate.issuer} />
               {certificate.number ? <Row label={meta('number')} value={certificate.number} /> : null}
@@ -64,9 +64,9 @@ export async function CertificationGrid({
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-line pb-2 last:border-0">
-      <dt className="text-ink-muted">{label}</dt>
-      <dd className="text-end text-abyss-900">{value}</dd>
+    <div className="flex items-baseline justify-between gap-4 border-b border-hairline pb-2 last:border-0">
+      <dt className="text-ink-500">{label}</dt>
+      <dd className="text-end text-ink-900">{value}</dd>
     </div>
   );
 }

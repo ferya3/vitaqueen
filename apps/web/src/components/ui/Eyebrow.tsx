@@ -1,6 +1,9 @@
 import { cn } from '@/lib/cn';
 
-/** Small tracked label that opens a section. Sets the editorial rhythm. */
+/**
+ * Small tracked label that opens a section. A pill rather than a rule: on the
+ * glass ground a hairline reads as an artefact, a tinted capsule reads as a tag.
+ */
 export function Eyebrow({
   children,
   className,
@@ -13,16 +16,18 @@ export function Eyebrow({
   return (
     <p
       className={cn(
-        'flex items-center gap-3 text-xs font-medium uppercase tracking-[0.28em]',
-        tone === 'light' ? 'text-aqua-300' : 'text-aqua-700',
+        'inline-flex w-fit items-center gap-2 rounded-pill px-3 py-1 text-2xs font-semibold uppercase tracking-[0.2em]',
+        tone === 'light'
+          ? 'bg-white/10 text-aqua-200'
+          : 'bg-aqua-500/10 text-aqua-700',
         className,
       )}
     >
       <span
         aria-hidden
         className={cn(
-          'h-px w-8',
-          tone === 'light' ? 'bg-aqua-300/60' : 'bg-aqua-700/40',
+          'size-1.5 rounded-full',
+          tone === 'light' ? 'bg-aqua-300' : 'bg-aqua-500',
         )}
       />
       {children}

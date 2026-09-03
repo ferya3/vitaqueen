@@ -52,26 +52,29 @@ export default async function NewsPage({ params }: Props) {
 
       <Section tone="canvas">
         {articles.length === 0 ? (
-          <p className="max-w-lg rounded-lg border border-dashed border-line px-6 py-8 text-ink-muted">
+          <p className="max-w-lg rounded-2xl border border-dashed border-aqua-500/35 bg-aqua-50/60 px-6 py-8 text-ink-500">
             {t('empty')}
           </p>
         ) : (
-          <Reveal as="ul" className="grid gap-10" stagger={0.06}>
+          <Reveal as="ul" className="grid gap-4" stagger={0.06}>
             {articles.map((article) => (
-              <RevealItem as="li" key={article.slug} className="border-b border-line pb-10">
-                <Link href={`/news/${article.slug}`} className="group grid gap-4 lg:grid-cols-[10rem_1fr]">
+              <RevealItem as="li" key={article.slug}>
+                <Link
+                  href={`/news/${article.slug}`}
+                  className="glass group grid gap-3 rounded-2xl p-6 transition-[transform,box-shadow] duration-(--duration-base) ease-(--ease-water) hover:-translate-y-1 hover:shadow-float sm:p-8 lg:grid-cols-[10rem_1fr] lg:gap-8"
+                >
                   <time
                     dateTime={article.publishedAt}
-                    className="text-sm text-ink-muted tabular"
+                    className="text-sm text-ink-500 tabular"
                   >
                     {formatDate(article.publishedAt, locale)}
                   </time>
                   <div>
-                    <h2 className="font-display text-2xl text-abyss-900 transition-colors group-hover:text-aqua-700">
+                    <h2 className="text-xl transition-colors group-hover:text-aqua-700 sm:text-2xl">
                       {article.title}
                     </h2>
-                    <p className="mt-3 max-w-2xl leading-relaxed text-ink-muted">{article.excerpt}</p>
-                    <span className="mt-4 inline-flex items-center gap-2 text-sm text-aqua-700">
+                    <p className="mt-2 max-w-2xl leading-relaxed text-ink-500">{article.excerpt}</p>
+                    <span className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-aqua-700">
                       {t('readMore')}
                       <ArrowIcon />
                     </span>

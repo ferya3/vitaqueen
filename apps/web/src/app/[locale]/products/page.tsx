@@ -61,7 +61,7 @@ export default async function ProductsPage({ params }: Props) {
 
       <Section tone="mist" id="specifications">
         <Eyebrow>{t('specifications')}</Eyebrow>
-        <TextReveal as="h2" className="mt-5 font-display text-3xl text-abyss-900">
+        <TextReveal as="h2" className="mt-4 text-2xl sm:text-3xl">
           {t('specifications')}
         </TextReveal>
 

@@ -51,29 +51,31 @@ export default async function ExportPage({ params }: Props) {
       />
 
       <Section tone="canvas">
-        <Reveal className="grid gap-12 lg:grid-cols-3" stagger={0.08}>
+        <Reveal className="grid gap-4 lg:grid-cols-3" stagger={0.08}>
           {BLOCKS.map((block, index) => (
-            <RevealItem key={block}>
+            <RevealItem key={block} className="glass rounded-2xl p-6 sm:p-8">
               <Eyebrow>{String(index + 1).padStart(2, '0')}</Eyebrow>
-              <h2 className="mt-4 font-display text-2xl text-abyss-900">{t(`${block}.title`)}</h2>
-              <p className="mt-4 leading-relaxed text-ink-muted">{t(`${block}.body`)}</p>
+              <h2 className="mt-3 text-xl sm:text-2xl">{t(`${block}.title`)}</h2>
+              <p className="mt-2.5 leading-relaxed text-ink-500">{t(`${block}.body`)}</p>
             </RevealItem>
           ))}
         </Reveal>
       </Section>
 
       <Section tone="mist" id="international-contact">
-        <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
-          <div>
+        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12">
+          <div className="glass h-fit rounded-2xl p-6 sm:p-8">
             <Eyebrow>{t('eyebrow')}</Eyebrow>
-            <TextReveal as="h2" className="mt-5 font-display text-3xl text-abyss-900">
+            <TextReveal as="h2" className="mt-4 text-2xl sm:text-3xl">
               {t('contact.title')}
             </TextReveal>
-            <p className="mt-5 text-lg leading-relaxed text-ink-muted">{t('contact.body')}</p>
+            <p className="mt-3 leading-relaxed text-ink-500 sm:text-lg">{t('contact.body')}</p>
           </div>
           {/* The export enquiry is the same pipeline as the contact form, just
               pre-filed under the right topic so it reaches the right desk. */}
-          <ContactForm defaultTopic="export" />
+          <div className="glass-strong rounded-2xl p-6 sm:p-8">
+            <ContactForm defaultTopic="export" />
+          </div>
         </div>
       </Section>
 

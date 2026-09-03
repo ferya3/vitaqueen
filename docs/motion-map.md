@@ -38,23 +38,29 @@ behind an image.
 
 ### Home
 
+The home page is five sections — hero, products, source, quality, contact — so
+the motion budget is spent on five moments rather than eleven.
+
 | Section | Mechanism | Hook | Degrades to |
 | --- | --- | --- | --- |
 | Hero entrance | Word-split headline, staggered `yPercent`, subject scale-in | `useHeroTimeline` | Everything visible, no transform |
 | Hero pointer parallax | `gsap.quickSetter` on the ticker; media −14 px, subject +26 px | `useHeroTimeline` + `usePointer` | Skipped on coarse pointers |
-| Hero scroll-out | Inner content recedes, background scales to 1.12 | `useHeroTimeline` | Static |
-| **Journey** (source → bottle) | Pinned section, six scrubbed steps, cross-fading panels | `usePinnedSequence` | Panels flow down the page, each revealed on entry |
-| Story chapters 01–05 | Line-split heading, body reveal, parallax art panel | `TextReveal`, `Reveal`, `useParallax` | CSS transition on `data-revealed` |
-| Source teaser | Mineral bars grow on width transition | `MineralChart` | Bars render at final width |
-| Product rail | Vertical scroll drives a horizontal track, pinned | `useHorizontalScroll` | Native swipe carousel below `lg` |
-| Closing CTA | Line reveal over generated backdrop | `TextReveal` | Static |
+| Hero scroll-out | Media drifts −6% once the block's bottom enters the viewport | `useHeroTimeline` | Static |
+| Products | Staggered grid reveal, card lift on hover | `Reveal` | CSS transition on `data-revealed` |
+| Source | Mineral bars grow on width transition; animated SVG route diagram | `MineralChart`, `SourceMap` | Bars render at final width |
+| Quality | Staggered pillar reveal | `Reveal` | Visible |
+| Contact | Static panel over a generated backdrop | — | Static |
+
+The hero is no longer a full-viewport band pinned to the top of the document,
+so its scroll-out trigger starts at `bottom bottom` rather than `top top` — with
+the old trigger the copy began fading the instant the page loaded.
 
 ### Inner pages
 
 | Page | Mechanism |
 | --- | --- |
 | All | `PageHero` line reveal; `PageTransition` fades the body across routes (opacity + 12 px, 450 ms) |
-| Factory | `ProcessSequence` — the eight production stages, same pinned mechanism as the home journey, plus per-stage metrics from the CMS |
+| Factory | `ProcessSequence` — the eight production stages in one pinned ink slab, 0.55 viewports of scroll per stage, plus per-stage metrics from the CMS. Never pins on a coarse pointer |
 | Source | Animated SVG route diagram: dashed stroke offset for flow, pulsing spring marker |
 | Quality | Reveals only. This page is read, not watched — the numbers are the point |
 | Products | Card lift on hover, staggered grid reveal |
@@ -67,7 +73,7 @@ behind an image.
 | Sheen | Button hover | Pure CSS, hidden under `motion-reduce` |
 | Count-up | `Stat` | Final value is server-rendered, so a crawler and a no-JS visitor see the real number |
 | Scroll progress | Header hairline | Written straight to the DOM on scroll; never re-renders React |
-| Header state | Solid past 24 px | `useSyncExternalStore`, re-renders only when the boolean flips |
+| Header state | The floating pill gains its glass material and contracts past 24 px | `useSyncExternalStore`, re-renders only when the boolean flips |
 
 ## The WebGL scene
 

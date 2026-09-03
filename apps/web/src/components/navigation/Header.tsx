@@ -28,8 +28,12 @@ function useScrolledPast(threshold: number) {
 }
 
 /**
- * The header sits over the hero in its transparent state and turns into a solid
- * bar once the visitor has scrolled past it.
+ * A floating glass bar rather than a full-width band.
+ *
+ * At the top of the page it is barely there; past the fold it contracts, gains
+ * its frosted material and lifts off the page. Because the whole site is light,
+ * the header keeps one colour scheme the whole way down — there is no
+ * dark-hero / light-body switch to get wrong.
  */
 export function Header() {
   const t = useTranslations('nav');
@@ -51,79 +55,89 @@ export function Header() {
   return (
     <>
       <header
-        className={cn(
-          'fixed inset-x-0 top-0 z-90 transition-[background-color,backdrop-filter,border-color] duration-(--duration-base)',
-          scrolled
-            ? 'border-b border-white/10 bg-abyss-950/85 backdrop-blur-xl'
-            : 'border-b border-transparent bg-transparent',
-        )}
+        className="fixed inset-x-0 top-0 z-90 pointer-events-none"
         onMouseLeave={() => setOpenKey(null)}
       >
-        <div className="shell flex h-16 items-center justify-between gap-4 sm:h-20 sm:gap-6">
-          <Link href="/" className="text-mist-50 transition-opacity hover:opacity-80">
-            <Logo label={siteConfig.name} />
-            <span className="sr-only">{t('home')}</span>
-          </Link>
-
-          <nav aria-label="Primary" className="hidden xl:block">
-            <ul className="flex items-center gap-1">
-              {primaryNavigation.map((item) => {
-                const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-                return (
-                  <li
-                    key={item.key}
-                    className="relative"
-                    onMouseEnter={() => setOpenKey(item.children ? item.key : null)}
-                  >
-                    <Link
-                      href={item.href}
-                      className={cn(
-                        'inline-flex items-center gap-1 whitespace-nowrap rounded-pill px-3 py-2 text-sm transition-colors',
-                        active ? 'text-aqua-300' : 'text-mist-200 hover:text-white',
-                      )}
-                    >
-                      {t(item.key)}
-                      {item.children ? <ChevronIcon className="h-3.5 w-3.5 opacity-60" /> : null}
-                    </Link>
-
-                    {item.children && openKey === item.key ? (
-                      <ul className="absolute start-0 top-full min-w-[15rem] overflow-hidden rounded-md border border-white/10 bg-abyss-900/95 py-2 shadow-lift backdrop-blur-xl">
-                        {item.children.map((child) => (
-                          <li key={child.key}>
-                            <Link
-                              href={child.href}
-                              className="block px-4 py-2.5 text-sm text-mist-300 transition-colors hover:bg-white/8 hover:text-white"
-                            >
-                              {t(child.key)}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-
-          <div className="flex items-center gap-2">
-            <LocaleSwitcher tone="light" label={t('language')} />
-            <button
-              type="button"
-              onClick={() => setMenuOpen(true)}
-              className="inline-flex items-center gap-2 rounded-pill border border-white/15 px-4 py-2 text-sm text-mist-200 transition-colors hover:border-white/40 hover:text-white xl:hidden"
-              aria-haspopup="dialog"
+        <div className="shell">
+          <div
+            className={cn(
+              'pointer-events-auto relative mt-3 flex items-center justify-between gap-3 rounded-pill px-3 transition-all duration-(--duration-base) ease-(--ease-water) sm:mt-4 sm:gap-5 sm:px-4',
+              scrolled ? 'glass-strong h-14 sm:h-16' : 'h-15 bg-transparent sm:h-18',
+            )}
+          >
+            <Link
+              href="/"
+              className="rounded-pill px-2 text-heading transition-opacity hover:opacity-70"
             >
-              <span className="flex flex-col gap-1" aria-hidden>
-                <span className="h-px w-4 bg-current" />
-                <span className="h-px w-4 bg-current" />
-              </span>
-              {t('menu')}
-            </button>
+              <Logo label={siteConfig.name} />
+              <span className="sr-only">{t('home')}</span>
+            </Link>
+
+            <nav aria-label="Primary" className="hidden xl:block">
+              <ul className="flex items-center gap-0.5">
+                {primaryNavigation.map((item) => {
+                  const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  return (
+                    <li
+                      key={item.key}
+                      className="relative"
+                      onMouseEnter={() => setOpenKey(item.children ? item.key : null)}
+                    >
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          'inline-flex items-center gap-1 whitespace-nowrap rounded-pill px-3.5 py-2 text-sm font-medium transition-colors',
+                          active
+                            ? 'bg-aqua-500/12 text-aqua-700'
+                            : 'text-ink-600 hover:bg-ink-900/5 hover:text-heading',
+                        )}
+                      >
+                        {t(item.key)}
+                        {item.children ? <ChevronIcon className="size-3.5 opacity-50" /> : null}
+                      </Link>
+
+                      {item.children && openKey === item.key ? (
+                        <ul className="glass-strong absolute start-0 top-[calc(100%+0.5rem)] min-w-60 overflow-hidden rounded-lg p-1.5">
+                          {item.children.map((child) => (
+                            <li key={child.key}>
+                              <Link
+                                href={child.href}
+                                className="block rounded-md px-3 py-2 text-sm text-ink-600 transition-colors hover:bg-aqua-500/10 hover:text-aqua-800"
+                              >
+                                {t(child.key)}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+
+            <div className="flex items-center gap-1.5">
+              <LocaleSwitcher label={t('language')} />
+              <button
+                type="button"
+                onClick={() => setMenuOpen(true)}
+                className={cn(
+                  'inline-flex items-center gap-2 rounded-pill px-4 py-2 text-sm font-medium text-heading transition-colors xl:hidden',
+                  scrolled ? 'bg-ink-900/6 hover:bg-ink-900/10' : 'glass',
+                )}
+                aria-haspopup="dialog"
+              >
+                <span className="flex flex-col gap-[3px]" aria-hidden>
+                  <span className="h-0.5 w-4 rounded-full bg-current" />
+                  <span className="h-0.5 w-4 rounded-full bg-current" />
+                </span>
+                {t('menu')}
+              </button>
+            </div>
+
+            <ScrollProgress />
           </div>
         </div>
-
-        <ScrollProgress />
       </header>
 
       <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} />

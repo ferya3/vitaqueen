@@ -33,18 +33,23 @@ export function MineralBar({
   return (
     <div className={cn('grid gap-2', className)}>
       <div className="flex items-baseline justify-between gap-4">
-        <span className={cn('text-sm', tone === 'light' ? 'text-mist-200' : 'text-ink')}>{label}</span>
+        <span className={cn('text-sm font-medium', tone === 'light' ? 'text-ground-200' : 'text-heading')}>
+          {label}
+        </span>
         <span className={cn('text-sm tabular', tone === 'light' ? 'text-aqua-300' : 'text-aqua-700')}>
           {formatNumber(value, locale)} <span className="text-xs opacity-70">{unit}</span>
         </span>
       </div>
       <div
-        className={cn('h-1.5 w-full overflow-hidden rounded-pill', tone === 'light' ? 'bg-white/10' : 'bg-mist-300')}
+        className={cn(
+          'h-2 w-full overflow-hidden rounded-pill',
+          tone === 'light' ? 'bg-white/10' : 'bg-ink-900/8',
+        )}
         role="img"
         aria-label={`${label}: ${value} ${unit}`}
       >
         <div
-          className="h-full rounded-pill bg-gradient-to-r from-aqua-600 to-aqua-300 transition-[width] duration-(--duration-cinematic) ease-[cubic-bezier(0.22,1,0.36,1)] rtl:bg-gradient-to-l"
+          className="h-full rounded-pill bg-gradient-to-r from-aqua-500 to-aqua-300 transition-[width] duration-(--duration-cinematic) ease-(--ease-water) rtl:bg-gradient-to-l"
           style={{ width: `${percent}%` }}
         />
       </div>

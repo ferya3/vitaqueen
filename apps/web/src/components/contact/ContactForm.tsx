@@ -58,7 +58,7 @@ export function ContactForm({ defaultTopic = 'general' }: { defaultTopic?: strin
 
   if (status === 'sent') {
     return (
-      <p className="rounded-lg border border-mineral-300 bg-mineral-50 px-6 py-8 text-mineral-800">
+      <p className="glass rounded-xl border-mint-300/60 bg-mint-100/70 px-6 py-8 font-medium text-mint-700">
         {t('success')}
       </p>
     );
@@ -74,11 +74,11 @@ export function ContactForm({ defaultTopic = 'general' }: { defaultTopic?: strin
       </div>
 
       <label className="grid gap-2 text-sm">
-        <span className="text-ink-muted">{t('topic')}</span>
+        <span className="text-ink-500">{t('topic')}</span>
         <select
           name="topic"
           defaultValue={defaultTopic}
-          className="h-12 rounded-md border border-line bg-white px-4 text-abyss-900 outline-none transition-colors focus:border-aqua-500"
+          className="h-12 rounded-lg border border-hairline bg-white/80 px-4 text-ink-900 outline-none transition-colors focus:border-aqua-500 focus:bg-white"
         >
           {TOPICS.map((topic) => (
             <option key={topic} value={topic}>
@@ -91,7 +91,7 @@ export function ContactForm({ defaultTopic = 'general' }: { defaultTopic?: strin
       <Field name="subject" label={t('subject')} required errors={errors.subject} />
 
       <label className="grid gap-2 text-sm">
-        <span className="text-ink-muted">
+        <span className="text-ink-500">
           {t('message')} <span aria-hidden className="text-aqua-600">*</span>
         </span>
         <textarea
@@ -99,7 +99,7 @@ export function ContactForm({ defaultTopic = 'general' }: { defaultTopic?: strin
           rows={6}
           required
           minLength={20}
-          className="rounded-md border border-line bg-white px-4 py-3 text-abyss-900 outline-none transition-colors focus:border-aqua-500"
+          className="rounded-lg border border-hairline bg-white/80 px-4 py-3 text-ink-900 outline-none transition-colors focus:border-aqua-500 focus:bg-white"
         />
         {errors.message ? <FieldError>{t('tooShort')}</FieldError> : null}
       </label>
@@ -112,12 +112,12 @@ export function ContactForm({ defaultTopic = 'general' }: { defaultTopic?: strin
         </label>
       </div>
 
-      <label className="flex items-start gap-3 text-sm text-ink-muted">
+      <label className="flex items-start gap-3 text-sm text-ink-500">
         <input
           name="consent"
           type="checkbox"
           required
-          className="mt-1 h-4 w-4 rounded-xs border-line accent-aqua-600"
+          className="mt-1 h-4 w-4 rounded-xs border-hairline accent-aqua-600"
         />
         <span>{t('consent')}</span>
       </label>
@@ -148,7 +148,7 @@ function Field({
 }) {
   return (
     <label className="grid gap-2 text-sm">
-      <span className="text-ink-muted">
+      <span className="text-ink-500">
         {label} {required ? <span aria-hidden className="text-aqua-600">*</span> : null}
       </span>
       <input
@@ -157,8 +157,8 @@ function Field({
         required={required}
         autoComplete={autoCompleteFor(name)}
         className={cn(
-          'h-12 rounded-md border bg-white px-4 text-abyss-900 outline-none transition-colors focus:border-aqua-500',
-          errors ? 'border-red-400' : 'border-line',
+          'h-12 rounded-lg border bg-white/80 px-4 text-ink-900 outline-none transition-colors focus:border-aqua-500 focus:bg-white',
+          errors ? 'border-red-400' : 'border-hairline',
         )}
       />
       {errors ? <FieldError>{errors[0]}</FieldError> : null}

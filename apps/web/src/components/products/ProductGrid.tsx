@@ -16,26 +16,29 @@ export function ProductGrid({ products }: { products: Product[] }) {
   return (
     <Reveal
       as="ul"
-      className="grid gap-px overflow-hidden rounded-lg bg-line sm:grid-cols-2 lg:grid-cols-3"
+      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
       stagger={0.06}
     >
       {products.map((product) => (
-        <RevealItem key={product.slug} as="li" className="bg-canvas">
+        <RevealItem key={product.slug} as="li">
           <Link
             href={`/products/${product.slug}`}
-            className="group flex h-full flex-col p-6 transition-colors duration-(--duration-base) hover:bg-white sm:p-8"
+            className="glass group flex h-full flex-col rounded-2xl p-6 transition-[transform,box-shadow] duration-(--duration-base) ease-(--ease-water) hover:-translate-y-1.5 hover:shadow-float sm:p-7"
           >
-            <div className="mb-6 flex h-36 items-end justify-center sm:mb-8 sm:h-48">
-              <BottleGlyph volumeMl={product.volumeMl} className="transition-transform duration-(--duration-slow) ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-2" />
+            <div className="mb-5 flex h-32 items-end justify-center sm:h-40">
+              <BottleGlyph
+                volumeMl={product.volumeMl}
+                className="transition-transform duration-(--duration-slow) ease-(--ease-water) group-hover:-translate-y-2"
+              />
             </div>
-            <p className="text-xs uppercase tracking-[0.22em] text-aqua-700">
+            <p className="text-2xs font-semibold uppercase tracking-[0.16em] text-aqua-600">
               {formatVolume(product.volumeMl, locale)}
             </p>
-            <h2 className="mt-2 font-display text-xl text-abyss-900 sm:text-2xl">{product.name}</h2>
-            <p className="mt-3 text-sm leading-relaxed text-ink-muted">{product.description}</p>
-            <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm text-abyss-900 transition-colors group-hover:text-aqua-700 sm:pt-8">
+            <h2 className="mt-1 text-lg sm:text-xl">{product.name}</h2>
+            <p className="mt-2 text-sm leading-relaxed text-ink-500">{product.description}</p>
+            <span className="mt-auto inline-flex items-center gap-1.5 pt-5 text-sm font-medium text-ink-600 transition-colors group-hover:text-aqua-700">
               {common('viewProduct')}
-              <ArrowIcon />
+              <ArrowIcon className="size-3.5" />
             </span>
           </Link>
         </RevealItem>

@@ -20,7 +20,7 @@ export function Breadcrumbs({
               {last ? (
                 <span
                   aria-current="page"
-                  className={tone === 'light' ? 'text-mist-400' : 'text-ink-muted'}
+                  className={tone === 'light' ? 'text-ink-300' : 'text-ink-500'}
                 >
                   {item.name}
                 </span>
@@ -29,14 +29,14 @@ export function Breadcrumbs({
                   href={item.path}
                   className={cn(
                     'transition-colors',
-                    tone === 'light' ? 'text-mist-300 hover:text-white' : 'text-aqua-700 hover:text-aqua-500',
+                    tone === 'light' ? 'text-ground-200 hover:text-white' : 'text-aqua-700 hover:text-aqua-500',
                   )}
                 >
                   {item.name}
                 </Link>
               )}
               {!last ? (
-                <span aria-hidden className={tone === 'light' ? 'text-white/25' : 'text-mist-400'}>
+                <span aria-hidden className={tone === 'light' ? 'text-white/25' : 'text-ink-300'}>
                   /
                 </span>
               ) : null}

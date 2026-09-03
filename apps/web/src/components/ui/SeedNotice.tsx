@@ -10,11 +10,11 @@ export function SeedNotice({ message, className }: { message: string; className?
     <p
       role="note"
       className={cn(
-        'inline-flex items-center gap-2 rounded-md border border-dashed border-aqua-500/40 bg-aqua-500/5 px-4 py-2.5 text-xs text-aqua-700',
+        'inline-flex items-center gap-2.5 rounded-pill border border-dashed border-aqua-500/40 bg-aqua-50/70 px-4 py-2 text-xs text-aqua-800',
         className,
       )}
     >
-      <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-aqua-500" />
+      <span aria-hidden className="inline-block size-1.5 shrink-0 rounded-full bg-aqua-500" />
       {message}
     </p>
   );

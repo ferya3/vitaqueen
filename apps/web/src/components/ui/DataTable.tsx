@@ -35,7 +35,7 @@ export function DataTable({
   return (
     <div className={className}>
       {caption ? (
-        <p className={cn('pb-4 text-sm', dark ? 'text-mist-400' : 'text-ink-muted')}>{caption}</p>
+        <p className={cn('pb-4 text-sm', dark ? 'text-ink-300' : 'text-ink-500')}>{caption}</p>
       ) : null}
 
       {/* Phones: one block per row. */}
@@ -44,11 +44,11 @@ export function DataTable({
           <li
             key={index}
             className={cn(
-              'rounded-md border p-4',
-              dark ? 'border-white/12 bg-white/[0.04]' : 'border-line bg-white/70',
+              'rounded-xl p-4',
+              dark ? 'border border-white/12 bg-white/[0.04]' : 'glass',
             )}
           >
-            <p className={cn('font-medium', dark ? 'text-white' : 'text-abyss-900')}>
+            <p className={cn('font-medium', dark ? 'text-white' : 'text-ink-900')}>
               {row[first.key] ?? '—'}
             </p>
 
@@ -58,12 +58,12 @@ export function DataTable({
                   <dt
                     className={cn(
                       'text-2xs uppercase tracking-[0.14em]',
-                      dark ? 'text-mist-500' : 'text-ink-muted',
+                      dark ? 'text-ink-400' : 'text-ink-500',
                     )}
                   >
                     {column.label}
                   </dt>
-                  <dd className={cn('tabular', dark ? 'text-mist-200' : 'text-abyss-900')}>
+                  <dd className={cn('tabular', dark ? 'text-ground-200' : 'text-ink-900')}>
                     {row[column.key] ?? '—'}
                   </dd>
                 </div>
@@ -74,13 +74,18 @@ export function DataTable({
       </ul>
 
       {/* Tablet and up: the table proper. */}
-      <div className="hidden overflow-x-auto sm:block">
+      <div
+        className={cn(
+          'hidden overflow-x-auto sm:block',
+          dark ? '' : 'glass rounded-xl px-5 py-1',
+        )}
+      >
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr
               className={cn(
                 'border-b',
-                dark ? 'border-white/15 text-mist-400' : 'border-abyss-900/15 text-ink-muted',
+                dark ? 'border-white/15 text-ink-300' : 'border-ink-900/15 text-ink-500',
               )}
             >
               {columns.map((column) => (
@@ -106,7 +111,9 @@ export function DataTable({
                 key={index}
                 className={cn(
                   'border-b transition-colors',
-                  dark ? 'border-white/8 hover:bg-white/[0.04]' : 'border-line hover:bg-mist-100',
+                  dark
+                    ? 'border-white/8 hover:bg-white/[0.04]'
+                    : 'border-hairline last:border-0 hover:bg-aqua-500/6',
                 )}
               >
                 {columns.map((column) => (

@@ -85,7 +85,7 @@ export default async function LegalPage({ params }: Props) {
             dangerouslySetInnerHTML={{ __html: page.body }}
           />
         ) : (
-          <p className="max-w-lg rounded-lg border border-dashed border-line px-6 py-8 text-ink-muted">
+          <p className="max-w-lg rounded-lg border border-dashed border-hairline px-6 py-8 text-ink-500">
             {common('error')}
           </p>
         )}

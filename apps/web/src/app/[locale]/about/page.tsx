@@ -53,7 +53,10 @@ export default async function AboutPage({ params }: Props) {
       />
 
       <Section tone="canvas">
-        <Reveal className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4" stagger={0.08}>
+        <Reveal
+          className="glass grid gap-6 rounded-2xl px-6 py-7 sm:grid-cols-2 sm:px-9 lg:grid-cols-4"
+          stagger={0.08}
+        >
           <RevealItem>
             <Stat value={source.data.altitudeMeters} label={t('stats.altitude')} suffix=" m" />
           </RevealItem>
@@ -70,24 +73,21 @@ export default async function AboutPage({ params }: Props) {
       </Section>
 
       <Section tone="mist">
-        <div className="grid gap-16">
+        <div className="grid gap-4">
           {blocks.map((block, index) => (
             <article
               key={block}
               id={block}
-              className="grid gap-6 border-t border-line pt-10 lg:grid-cols-[18rem_1fr] lg:gap-16"
+              className="glass grid gap-3 rounded-xl p-6 sm:p-8 lg:grid-cols-[16rem_1fr] lg:items-baseline lg:gap-10"
             >
               <div>
                 <Eyebrow>{String(index + 1).padStart(2, '0')}</Eyebrow>
-                <TextReveal
-                  as="h2"
-                  className="mt-4 font-display text-3xl leading-tight text-abyss-900"
-                >
+                <TextReveal as="h2" className="mt-3 text-2xl sm:text-3xl">
                   {t(`${block}.title`)}
                 </TextReveal>
               </div>
               <Reveal>
-                <p className="max-w-2xl text-lg leading-relaxed text-ink-muted">
+                <p className="max-w-2xl leading-relaxed text-ink-500 sm:text-lg">
                   {t(`${block}.body`)}
                 </p>
               </Reveal>

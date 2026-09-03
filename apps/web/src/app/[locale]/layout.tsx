@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { Manrope, Vazirmatn } from 'next/font/google';
+import { Plus_Jakarta_Sans, Vazirmatn } from 'next/font/google';
 
 import '../globals.css';
 
@@ -15,12 +15,16 @@ import { Header } from '@/components/navigation/Header';
 import { Footer } from '@/components/navigation/Footer';
 import { organizationSchema, websiteSchema } from '@/lib/schema';
 
-/** Latin display + text face. Variable, so one file covers the whole scale. */
-const manrope = Manrope({
+/**
+ * Latin display + text face. Plus Jakarta Sans carries the geometric, slightly
+ * rounded shapes the glass surfaces need; it is variable, so one file covers
+ * the whole weight scale.
+ */
+const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
   variable: '--font-latin',
   display: 'swap',
-  weight: ['300', '400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700', '800'],
 });
 
 /** Persian and Arabic face. Vazirmatn has proper Persian digits and kashida. */
@@ -37,8 +41,8 @@ export function generateStaticParams() {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#fbfcfd' },
-    { media: '(prefers-color-scheme: dark)', color: '#030d18' },
+    { media: '(prefers-color-scheme: light)', color: '#f2fafd' },
+    { media: '(prefers-color-scheme: dark)', color: '#f2fafd' },
   ],
   colorScheme: 'light',
   width: 'device-width',
@@ -99,7 +103,7 @@ export default async function LocaleLayout({
     <html
       lang={localeTags[locale as Locale]}
       dir={direction}
-      className={`${manrope.variable} ${vazirmatn.variable}`}
+      className={`${jakarta.variable} ${vazirmatn.variable}`}
       style={
         {
           // Bind the design system's font tokens to the right face for this
@@ -117,7 +121,7 @@ export default async function LocaleLayout({
       <body className="min-h-dvh antialiased">
         <a
           href="#main"
-          className="sr-only rounded-md bg-abyss-900 px-4 py-2 text-mist-50 focus:not-sr-only focus:absolute focus:start-4 focus:top-4 focus:z-200"
+          className="sr-only rounded-pill bg-ink-900 px-5 py-2.5 text-sm text-ground-50 shadow-float focus:not-sr-only focus:absolute focus:start-4 focus:top-4 focus:z-200"
         >
           {common('skipToContent')}
         </a>

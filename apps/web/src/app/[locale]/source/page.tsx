@@ -71,20 +71,22 @@ export default async function SourcePage({ params }: Props) {
       />
 
       <Section tone="canvas" id="spring">
-        <div className="grid gap-14 lg:grid-cols-2 lg:items-start">
-          <div>
-            <Eyebrow>{nav('sourceSpring')}</Eyebrow>
-            <TextReveal as="h2" className="mt-5 font-display text-3xl text-abyss-900">
-              {t('spring.title')}
-            </TextReveal>
-            <Reveal>
-              <p className="mt-5 text-lg leading-relaxed text-ink-muted">{t('spring.body')}</p>
-            </Reveal>
+        <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+          <div className="grid gap-4">
+            <div className="glass rounded-2xl p-6 sm:p-8">
+              <Eyebrow>{nav('sourceSpring')}</Eyebrow>
+              <TextReveal as="h2" className="mt-4 text-2xl sm:text-3xl">
+                {t('spring.title')}
+              </TextReveal>
+              <Reveal>
+                <p className="mt-3 leading-relaxed text-ink-500 sm:text-lg">{t('spring.body')}</p>
+              </Reveal>
+            </div>
 
-            <div id="geography" className="mt-12 scroll-mt-28">
+            <div id="geography" className="glass scroll-mt-28 rounded-2xl p-6 sm:p-8">
               <Eyebrow>{nav('sourceGeography')}</Eyebrow>
-              <h2 className="mt-5 font-display text-3xl text-abyss-900">{t('geography.title')}</h2>
-              <p className="mt-5 text-lg leading-relaxed text-ink-muted">{t('geography.body')}</p>
+              <h2 className="mt-4 text-2xl sm:text-3xl">{t('geography.title')}</h2>
+              <p className="mt-3 leading-relaxed text-ink-500 sm:text-lg">{t('geography.body')}</p>
             </div>
           </div>
 
@@ -96,20 +98,20 @@ export default async function SourcePage({ params }: Props) {
       </Section>
 
       <Section tone="deep" id="characteristics">
-        <div className="grid gap-14 lg:grid-cols-[1fr_1.1fr] lg:gap-20">
+        <div className="grid gap-8 lg:grid-cols-[1fr_1.1fr] lg:gap-12">
           <div>
             <Eyebrow tone="light">{nav('sourceCharacteristics')}</Eyebrow>
             <TextReveal as="h2" className="mt-5 font-display text-3xl text-white">
               {t('characteristics.title')}
             </TextReveal>
-            <p className="mt-5 max-w-md leading-relaxed text-mist-400">
+            <p className="mt-5 max-w-md leading-relaxed text-ink-300">
               {t('characteristics.body')}
             </p>
 
             <dl className="mt-10 grid gap-x-10 gap-y-5 sm:grid-cols-2">
               {factRows.map(([label, value]) => (
                 <div key={label} className="border-b border-white/10 pb-3">
-                  <dt className="text-xs uppercase tracking-[0.18em] text-mist-500">{label}</dt>
+                  <dt className="text-xs uppercase tracking-[0.18em] text-ink-400">{label}</dt>
                   <dd className="mt-1.5 text-lg text-aqua-300 tabular">{value}</dd>
                 </div>
               ))}
@@ -118,12 +120,12 @@ export default async function SourcePage({ params }: Props) {
 
           <div>
             <h3 className="font-display text-2xl text-white">{t('minerals.title')}</h3>
-            <p className="mt-3 text-sm text-mist-500">{t('minerals.body')}</p>
+            <p className="mt-3 text-sm text-ink-400">{t('minerals.body')}</p>
             <MineralChart minerals={profile.minerals} tone="light" columns={1} className="mt-8" />
             {seeded ? (
               <SeedNotice
                 message={common('sampleData')}
-                className="mt-8 border-white/20 bg-white/5 text-mist-400"
+                className="mt-8 border-white/20 bg-white/5 text-ink-300"
               />
             ) : null}
           </div>
@@ -131,12 +133,12 @@ export default async function SourcePage({ params }: Props) {
       </Section>
 
       <Section tone="canvas" id="protection">
-        <div className="max-w-3xl">
+        <div className="glass max-w-3xl rounded-2xl p-6 sm:p-9">
           <Eyebrow>{nav('sourceProtection')}</Eyebrow>
-          <TextReveal as="h2" className="mt-5 font-display text-3xl text-abyss-900">
+          <TextReveal as="h2" className="mt-4 text-2xl sm:text-3xl">
             {t('protection.title')}
           </TextReveal>
-          <p className="mt-5 text-lg leading-relaxed text-ink-muted">{t('protection.body')}</p>
+          <p className="mt-3 leading-relaxed text-ink-500 sm:text-lg">{t('protection.body')}</p>
         </div>
       </Section>
 

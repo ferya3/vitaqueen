@@ -49,33 +49,33 @@ export default async function ContactPage({ params }: Props) {
       />
 
       <Section tone="canvas">
-        <div className="grid gap-14 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
-          <div>
+        <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-12">
+          <div className="glass h-fit rounded-2xl p-6 sm:p-8">
             <Eyebrow>{office('title')}</Eyebrow>
-            <dl className="mt-8 grid gap-6 text-sm">
+            <dl className="mt-6 grid gap-5 text-sm">
               <div>
-                <dt className="text-ink-muted">{office('email')}</dt>
+                <dt className="text-ink-500">{office('email')}</dt>
                 <dd className="mt-1">
-                  <a href={`mailto:${siteConfig.email}`} className="text-abyss-900 transition-colors hover:text-aqua-700">
+                  <a href={`mailto:${siteConfig.email}`} className="text-ink-900 transition-colors hover:text-aqua-700">
                     {siteConfig.email}
                   </a>
                 </dd>
               </div>
               <div>
-                <dt className="text-ink-muted">{office('phone')}</dt>
+                <dt className="text-ink-500">{office('phone')}</dt>
                 <dd className="mt-1" dir="ltr">
                   <a
                     href={`tel:${siteConfig.phone.replace(/\s/g, '')}`}
-                    className="text-abyss-900 transition-colors hover:text-aqua-700"
+                    className="text-ink-900 transition-colors hover:text-aqua-700"
                   >
                     {siteConfig.phone}
                   </a>
                 </dd>
               </div>
               <div>
-                <dt className="text-ink-muted">{nav('export')}</dt>
+                <dt className="text-ink-500">{nav('export')}</dt>
                 <dd className="mt-1">
-                  <a href={`mailto:${siteConfig.exportEmail}`} className="text-abyss-900 transition-colors hover:text-aqua-700">
+                  <a href={`mailto:${siteConfig.exportEmail}`} className="text-ink-900 transition-colors hover:text-aqua-700">
                     {siteConfig.exportEmail}
                   </a>
                 </dd>
@@ -83,7 +83,9 @@ export default async function ContactPage({ params }: Props) {
             </dl>
           </div>
 
-          <ContactForm />
+          <div className="glass-strong rounded-2xl p-6 sm:p-8">
+            <ContactForm />
+          </div>
         </div>
       </Section>
 
