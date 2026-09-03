@@ -31,7 +31,7 @@ export function Section({
     <Tag
       id={id}
       // `scroll-mt` keeps in-page anchors clear of the fixed header.
-      className={cn('relative scroll-mt-24 section-y', toneClass[tone], className)}
+      className={cn('relative scroll-mt-20 section-y sm:scroll-mt-24', toneClass[tone], className)}
     >
       {bleed ? children : <div className="shell">{children}</div>}
     </Tag>

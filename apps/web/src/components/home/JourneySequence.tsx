@@ -42,7 +42,7 @@ export function JourneySequence() {
         }}
       />
 
-      <div className="shell relative z-10 grid gap-14 py-24 lg:h-screen lg:grid-cols-[16rem_1fr] lg:items-center lg:gap-24 lg:py-0">
+      <div className="shell relative z-10 grid gap-10 py-14 sm:gap-14 sm:py-24 lg:h-screen lg:grid-cols-[16rem_1fr] lg:items-center lg:gap-24 lg:py-0">
         <div>
           <Eyebrow tone="light">{t('eyebrow')}</Eyebrow>
           <h2 className="mt-6 max-w-xs font-display text-3xl leading-tight">{t('title')}</h2>
@@ -88,7 +88,7 @@ export function JourneySequence() {
               data-sequence-step
               aria-hidden={undefined}
               className={cn(
-                'border-t border-white/10 py-10 first:border-t-0 lg:absolute lg:inset-0 lg:border-0 lg:py-0',
+                'border-t border-white/10 py-7 first:border-t-0 sm:py-10 lg:absolute lg:inset-0 lg:border-0 lg:py-0',
                 'lg:transition-[opacity,transform] lg:duration-(--duration-slow) lg:ease-[cubic-bezier(0.22,1,0.36,1)]',
                 index === active
                   ? 'lg:pointer-events-auto lg:translate-y-0 lg:opacity-100'
@@ -96,14 +96,14 @@ export function JourneySequence() {
               )}
             >
               <div className="flex items-baseline gap-5">
-                <span className="font-display text-6xl text-white/10 tabular lg:text-8xl">
+                <span className="font-display text-4xl text-white/10 tabular sm:text-6xl lg:text-8xl">
                   {String(index + 1).padStart(2, '0')}
                 </span>
-                <h3 className="font-display text-3xl text-white lg:text-5xl">
+                <h3 className="font-display text-2xl text-white sm:text-3xl lg:text-5xl">
                   {t(`${step}.title`)}
                 </h3>
               </div>
-              <p className="mt-6 max-w-xl text-lg leading-relaxed text-mist-300">
+              <p className="mt-4 max-w-xl leading-relaxed text-mist-300 sm:mt-6 sm:text-lg">
                 {t(`${step}.body`)}
               </p>
             </article>

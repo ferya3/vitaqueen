@@ -37,18 +37,18 @@ export function PageHero({
         className="absolute inset-0 bg-gradient-to-t from-abyss-950 via-abyss-950/35 to-abyss-950/70"
       />
 
-      <div className="shell relative z-10 pb-20 pt-36 sm:pt-44">
-        {trail ? <Breadcrumbs trail={trail} tone="light" className="mb-8" /> : null}
+      <div className="shell relative z-10 pb-12 pt-24 sm:pb-20 sm:pt-44">
+        {trail ? <Breadcrumbs trail={trail} tone="light" className="mb-6 sm:mb-8" /> : null}
         <Eyebrow tone="light">{eyebrow}</Eyebrow>
         <TextReveal
           as="h1"
           split="lines"
-          className="mt-6 max-w-4xl font-display text-5xl leading-[1.02]"
+          className="mt-5 max-w-4xl font-display text-5xl leading-[1.05] sm:mt-6"
         >
           {title}
         </TextReveal>
         {lead ? (
-          <p className="mt-7 max-w-2xl text-lg leading-relaxed text-mist-300">{lead}</p>
+          <p className="mt-5 max-w-2xl leading-relaxed text-mist-300 sm:mt-7 sm:text-lg">{lead}</p>
         ) : null}
         {children}
       </div>

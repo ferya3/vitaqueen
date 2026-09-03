@@ -18,7 +18,7 @@ export function Footer() {
 
   return (
     <footer className="bg-abyss-950 text-mist-300">
-      <div className="shell grid gap-14 py-20 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+      <div className="shell grid gap-10 py-14 sm:gap-14 sm:py-20 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div className="max-w-sm">
           <Logo label={siteConfig.name} className="text-mist-50" />
           <p className="mt-5 text-sm leading-relaxed text-mist-400">{t('about')}</p>

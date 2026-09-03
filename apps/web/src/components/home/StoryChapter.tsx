@@ -29,15 +29,15 @@ export function StoryChapter({
     <section className="relative overflow-hidden bg-canvas section-y">
       <div
         className={cn(
-          'shell grid items-center gap-12 lg:grid-cols-2 lg:gap-20',
+          'shell grid items-center gap-8 sm:gap-12 lg:grid-cols-2 lg:gap-20',
           flip && 'lg:[&>*:first-child]:order-2',
         )}
       >
-        <div className="relative aspect-4/5 overflow-hidden rounded-lg sm:aspect-3/2 lg:aspect-4/5">
+        <div className="relative aspect-16/10 overflow-hidden rounded-lg sm:aspect-3/2 lg:aspect-4/5">
           <Parallax amount={0.16} className="absolute inset-[-12%]">
             <WaterBackdrop variant={backdrop} className="h-full" />
           </Parallax>
-          <span className="absolute bottom-6 start-6 font-display text-7xl text-white/25 tabular">
+          <span className="absolute bottom-4 start-5 font-display text-5xl text-white/25 tabular sm:bottom-6 sm:start-6 sm:text-7xl">
             {t('index')}
           </span>
         </div>
@@ -51,7 +51,7 @@ export function StoryChapter({
             {t('title')}
           </TextReveal>
           <Reveal direction="up" delay={0.1}>
-            <p className="mt-7 max-w-lg text-lg leading-relaxed text-ink-muted">{t('body')}</p>
+            <p className="mt-5 max-w-lg leading-relaxed text-ink-muted sm:mt-7 sm:text-lg">{t('body')}</p>
           </Reveal>
         </div>
       </div>

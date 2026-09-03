@@ -24,34 +24,34 @@ export function ProductRail({ products }: { products: Product[] }) {
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden bg-mist-200 py-24 lg:h-screen lg:py-0"
+      className="relative overflow-hidden bg-mist-200 py-14 sm:py-24 lg:h-screen lg:py-0"
       id="products"
     >
       <div className="shell lg:flex lg:h-full lg:flex-col lg:justify-center">
         <div className="max-w-xl">
           <Eyebrow>{t('eyebrow')}</Eyebrow>
-          <h2 className="mt-6 font-display text-4xl leading-tight text-abyss-900">{t('title')}</h2>
-          <p className="mt-5 text-lg text-ink-muted">{t('body')}</p>
+          <h2 className="mt-5 font-display text-4xl leading-tight text-abyss-900 sm:mt-6">{t('title')}</h2>
+          <p className="mt-4 text-ink-muted sm:mt-5 sm:text-lg">{t('body')}</p>
         </div>
 
-        <div className="mt-12 overflow-x-auto pb-4 lg:overflow-visible lg:pb-0">
+        <div className="-mx-(--spacing-gutter) mt-8 overflow-x-auto px-(--spacing-gutter) pb-4 sm:mt-12 lg:mx-0 lg:overflow-visible lg:px-0 lg:pb-0">
           <ul
             ref={trackRef}
             className="flex w-max gap-6 lg:gap-8"
           >
             {products.map((product) => (
-              <li key={product.slug} className="w-[16rem] shrink-0 sm:w-[19rem]">
+              <li key={product.slug} className="w-[13.5rem] shrink-0 sm:w-[19rem]">
                 <Link
                   href={`/products/${product.slug}`}
-                  className="group flex h-full flex-col rounded-lg border border-abyss-900/8 bg-white/70 p-7 transition-[transform,box-shadow] duration-(--duration-base) ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1.5 hover:shadow-lift"
+                  className="group flex h-full flex-col rounded-lg border border-abyss-900/8 bg-white/70 p-5 transition-[transform,box-shadow] duration-(--duration-base) ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1.5 hover:shadow-lift sm:p-7"
                 >
-                  <div className="mb-6 h-40 self-center">
+                  <div className="mb-5 h-28 self-center sm:mb-6 sm:h-40">
                     <BottleGlyph volumeMl={product.volumeMl} />
                   </div>
                   <p className="text-xs uppercase tracking-[0.22em] text-aqua-700">
                     {formatVolume(product.volumeMl, locale)}
                   </p>
-                  <h3 className="mt-2 font-display text-xl text-abyss-900">{product.name}</h3>
+                  <h3 className="mt-2 font-display text-lg text-abyss-900 sm:text-xl">{product.name}</h3>
                   {product.tagline ? (
                     <p className="mt-2 text-sm text-ink-muted">{product.tagline}</p>
                   ) : null}

@@ -23,17 +23,17 @@ export function ProductGrid({ products }: { products: Product[] }) {
         <RevealItem key={product.slug} as="li" className="bg-canvas">
           <Link
             href={`/products/${product.slug}`}
-            className="group flex h-full flex-col p-8 transition-colors duration-(--duration-base) hover:bg-white"
+            className="group flex h-full flex-col p-6 transition-colors duration-(--duration-base) hover:bg-white sm:p-8"
           >
-            <div className="mb-8 flex h-48 items-end justify-center">
+            <div className="mb-6 flex h-36 items-end justify-center sm:mb-8 sm:h-48">
               <BottleGlyph volumeMl={product.volumeMl} className="transition-transform duration-(--duration-slow) ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-2" />
             </div>
             <p className="text-xs uppercase tracking-[0.22em] text-aqua-700">
               {formatVolume(product.volumeMl, locale)}
             </p>
-            <h2 className="mt-2 font-display text-2xl text-abyss-900">{product.name}</h2>
+            <h2 className="mt-2 font-display text-xl text-abyss-900 sm:text-2xl">{product.name}</h2>
             <p className="mt-3 text-sm leading-relaxed text-ink-muted">{product.description}</p>
-            <span className="mt-auto inline-flex items-center gap-2 pt-8 text-sm text-abyss-900 transition-colors group-hover:text-aqua-700">
+            <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm text-abyss-900 transition-colors group-hover:text-aqua-700 sm:pt-8">
               {common('viewProduct')}
               <ArrowIcon />
             </span>

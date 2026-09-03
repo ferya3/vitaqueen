@@ -16,7 +16,7 @@ export async function ClosingCta({ locale }: { locale: Locale }) {
         <TextReveal as="h2" className="max-w-2xl font-display text-5xl leading-[1.05] text-white">
           {t('title')}
         </TextReveal>
-        <p className="max-w-xl text-lg leading-relaxed text-mist-300">{t('body')}</p>
+        <p className="max-w-xl leading-relaxed text-mist-300 sm:text-lg">{t('body')}</p>
         <div className="flex flex-wrap gap-3">
           <ButtonLink href="/contact" variant="light" size="lg">
             {t('primary')}

@@ -54,7 +54,7 @@ export function LocaleSwitcher({
         )}
       >
         <GlobeIcon />
-        <span className="hidden sm:inline">{labels[active]}</span>
+        <span>{labels[active]}</span>
         <ChevronIcon className={cn('transition-transform', open && 'rotate-180')} />
       </button>
 

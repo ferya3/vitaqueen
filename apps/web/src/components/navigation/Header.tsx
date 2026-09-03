@@ -59,7 +59,7 @@ export function Header() {
         )}
         onMouseLeave={() => setOpenKey(null)}
       >
-        <div className="shell flex h-20 items-center justify-between gap-6">
+        <div className="shell flex h-16 items-center justify-between gap-4 sm:h-20 sm:gap-6">
           <Link href="/" className="text-mist-50 transition-opacity hover:opacity-80">
             <Logo label={siteConfig.name} />
             <span className="sr-only">{t('home')}</span>

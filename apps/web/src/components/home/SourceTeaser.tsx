@@ -32,7 +32,7 @@ export async function SourceTeaser({
           <TextReveal as="h2" className="mt-6 font-display text-4xl leading-tight text-white">
             {t('title')}
           </TextReveal>
-          <p className="mt-6 max-w-md text-lg leading-relaxed text-mist-400">{t('body')}</p>
+          <p className="mt-5 max-w-md leading-relaxed text-mist-400 sm:mt-6 sm:text-lg">{t('body')}</p>
 
           <dl className="mt-10 grid grid-cols-2 gap-x-10 gap-y-6 sm:grid-cols-3">
             <Fact label={facts('altitude')} value={`${formatNumber(profile.altitudeMeters, locale)} m`} />

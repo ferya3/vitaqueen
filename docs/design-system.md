@@ -97,6 +97,27 @@ Primitives in `components/ui`:
 | `BottleGlyph` | Vector product stand-in whose silhouette derives from the actual volume, so the range reads as a range. |
 | `SeedNotice` | Marks figures as sample data. Never suppress it to make a screenshot look finished. |
 
+## Small screens
+
+Every clamp in the scale has two ends, and the small end is the one that
+decides what a phone gets. The first pass tuned the large end and left the
+small end at desktop values: 80px of padding above *and* below every band,
+a 52px minimum for the hero, 19px body copy. The home page came out fourteen
+screens tall on a 390px device, most of it empty.
+
+What that pass corrected, and the rule behind each:
+
+| | Rule |
+| --- | --- |
+| `--spacing-section` | 52px on a phone, not 80. Vertical rhythm is proportional to the viewport, and a phone's viewport is 844px tall. |
+| Display sizes | Every `--text-*` minimum stepped down; `--text-hero` from 3.25rem to 2.5rem. A headline that fills the screen is not impact, it is an obstacle. |
+| Body copy | `text-lg` (19px) is a desktop measure. Paragraphs are 16px until `sm`. |
+| Header | 64px on a phone, 80px from `sm`. `scroll-mt` follows it so anchors still clear it. |
+| Hero alignment | Bottom-aligned on desktop because the 3D bottle occupies the space above. That scene never mounts on a phone, so the hero centres instead of leaving a third of the screen blank. |
+| Art panels | The story chapters' 4:5 panel is half a screen of gradient at 390px. 16:10 on phones. |
+| Tables | Below `sm` a row becomes a block — see `DataTable`. |
+| Form fields | Held at 16px on small screens. Safari zooms the viewport when a focused input is smaller, and does not zoom back. |
+
 ## RTL
 
 Handled in three places, and all three are necessary:

@@ -30,7 +30,7 @@ export function ProcessSequence({ stages }: { stages: ProductionStage[] }) {
     >
       <WaterBackdrop variant="line" className="opacity-60" />
 
-      <div className="shell relative z-10 grid gap-12 py-24 lg:h-screen lg:grid-cols-[1fr_1.15fr] lg:items-center lg:gap-20 lg:py-0">
+      <div className="shell relative z-10 grid gap-10 py-14 sm:gap-12 sm:py-24 lg:h-screen lg:grid-cols-[1fr_1.15fr] lg:items-center lg:gap-20 lg:py-0">
         {/* Vertical line diagram — the water's actual route through the plant. */}
         <ol className="hidden lg:block">
           {stages.map((stage, index) => (
@@ -70,7 +70,7 @@ export function ProcessSequence({ stages }: { stages: ProductionStage[] }) {
               key={stage.key}
               data-sequence-step
               className={cn(
-                'border-t border-white/10 py-10 first:border-t-0 lg:absolute lg:inset-0 lg:border-0 lg:py-0',
+                'border-t border-white/10 py-7 first:border-t-0 sm:py-10 lg:absolute lg:inset-0 lg:border-0 lg:py-0',
                 'lg:transition-[opacity,transform] lg:duration-(--duration-slow) lg:ease-[cubic-bezier(0.22,1,0.36,1)]',
                 index === active
                   ? 'lg:translate-y-0 lg:opacity-100'
@@ -80,10 +80,10 @@ export function ProcessSequence({ stages }: { stages: ProductionStage[] }) {
               <p className="font-display text-sm tracking-[0.3em] text-aqua-400 tabular">
                 {String(index + 1).padStart(2, '0')} / {String(stages.length).padStart(2, '0')}
               </p>
-              <h3 className="mt-5 font-display text-4xl leading-tight text-white lg:text-5xl">
+              <h3 className="mt-4 font-display text-2xl leading-tight text-white sm:mt-5 sm:text-4xl lg:text-5xl">
                 {stage.titleKey ? t(`${stage.titleKey}.title`) : stage.title}
               </h3>
-              <p className="mt-6 max-w-xl text-lg leading-relaxed text-mist-300">
+              <p className="mt-4 max-w-xl leading-relaxed text-mist-300 sm:mt-6 sm:text-lg">
                 {stage.titleKey ? t(`${stage.titleKey}.body`) : stage.body}
               </p>
 

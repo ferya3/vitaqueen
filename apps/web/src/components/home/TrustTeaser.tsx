@@ -27,7 +27,7 @@ export async function TrustTeaser({ locale }: { locale: Locale }) {
           <TextReveal as="h2" className="mt-6 max-w-md font-display text-4xl leading-tight text-abyss-900">
             {quality('title')}
           </TextReveal>
-          <p className="mt-6 max-w-md text-lg leading-relaxed text-ink-muted">{quality('body')}</p>
+          <p className="mt-5 max-w-md leading-relaxed text-ink-muted sm:mt-6 sm:text-lg">{quality('body')}</p>
           <ButtonLink href="/quality" variant="secondary" className="mt-8">
             {quality('cta')}
             <ArrowIcon />
