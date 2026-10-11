@@ -79,7 +79,11 @@ else
     press Ctrl+C and, as root, run:
       echo '$(id -un) ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/$(id -un) && chmod 440 /etc/sudoers.d/$(id -un)"
   fi
-  sudo -v || die "sudo authentication failed."
+  # `sudo true`, not `sudo -v`: with sudo's default `verifypw=all`, `-v` asks
+  # for a password unless *every* rule for the user is NOPASSWD — and a member
+  # of the sudo group also matches `%sudo ALL=(ALL:ALL) ALL`, so a passwordless
+  # account would be prompted for a password it does not have.
+  sudo true || die "sudo authentication failed."
   # Keep the sudo timestamp alive for the length of the run.
   while true; do sudo -n true; sleep 50; kill -0 "$$" 2>/dev/null || exit; done 2>/dev/null &
   SUDO_KEEPALIVE=$!
