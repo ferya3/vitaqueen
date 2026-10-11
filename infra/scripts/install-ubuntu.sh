@@ -304,12 +304,26 @@ if [[ "$WITH_NGINX" == "1" ]]; then
   "${SUDO[@]}" install -m 644 "$INSTALL_DIR/infra/nginx/vitaqueen-http.conf" /etc/nginx/sites-available/vitaqueen
   "${SUDO[@]}" ln -sfn /etc/nginx/sites-available/vitaqueen /etc/nginx/sites-enabled/vitaqueen
   "${SUDO[@]}" rm -f /etc/nginx/sites-enabled/default
+  # A host with IPv6 switched off cannot bind [::]:80, and nginx then refuses
+  # to start at all.
+  if [[ ! -s /proc/net/if_inet6 ]]; then
+    "${SUDO[@]}" sed -i '/listen \[::\]:80/d' /etc/nginx/sites-available/vitaqueen
+    info "IPv6 is disabled here; nginx listens on IPv4 only."
+  fi
   "${SUDO[@]}" nginx -t
-  "${SUDO[@]}" systemctl reload nginx 2>/dev/null || "${SUDO[@]}" service nginx reload
+  # restart, not reload: if nginx failed to start when it was installed,
+  # there is nothing running to reload.
+  "${SUDO[@]}" systemctl enable nginx >/dev/null 2>&1 || true
+  "${SUDO[@]}" systemctl restart nginx 2>/dev/null || "${SUDO[@]}" service nginx restart
   if command -v ufw >/dev/null && "${SUDO[@]}" ufw status | grep -q 'Status: active'; then
     "${SUDO[@]}" ufw allow 'Nginx HTTP' >/dev/null
   fi
-  info "nginx proxies port 80 to the site."
+  for attempt in $(seq 1 15); do
+    if curl -fsS -o /dev/null http://127.0.0.1/fa; then break; fi
+    (( attempt == 15 )) && die "nginx is not passing requests to the site. Check: sudo systemctl status nginx; sudo tail -30 /var/log/nginx/error.log"
+    sleep 1
+  done
+  info "nginx answers on port 80. If the browser still cannot connect, port 80 is closed in the hosting provider's firewall."
 fi
 
 # --- Done -------------------------------------------------------------------
