@@ -16,10 +16,10 @@ export async function ContactCta({ locale }: { locale: Locale }) {
     <section id="contact" className="shell section-y scroll-mt-24">
       <div className="grid gap-10 border-t border-hairline pt-14 lg:grid-cols-[1fr_auto] lg:items-end">
         <div>
-          <h2 className="text-8xl font-semibold leading-[0.92] tracking-[-0.05em] [:lang(ar)_&]:leading-[1.2] [:lang(fa)_&]:leading-[1.2]">
+          <h2 className="display display-xl max-w-3xl">
             {t('title')}
           </h2>
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-ink-500 sm:text-lg">{t('body')}</p>
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-500">{t('body')}</p>
           <div className="mt-8 flex flex-wrap gap-x-10 gap-y-4 text-base font-semibold text-heading sm:text-lg">
             <a href={`mailto:${siteConfig.email}`} className="border-b-2 border-aqua-400 pb-1 transition-colors hover:text-aqua-700">
               {siteConfig.email}

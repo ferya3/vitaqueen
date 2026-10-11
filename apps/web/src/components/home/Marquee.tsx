@@ -9,18 +9,29 @@ import type { Locale } from '@/i18n/routing';
  * still under reduced motion, and the copy is hidden from assistive tech so
  * the phrases are read once rather than in a loop.
  */
-export async function Marquee({ locale, facts }: { locale: Locale; facts: string[] }) {
+export async function Marquee({ locale, facts }: { locale: Locale; facts: Array<{ label: string; value: string }> }) {
   const t = await getTranslations({ locale, namespace: 'home.marquee' });
-  const items = [t('a'), facts[0], t('b'), facts[1], t('c'), facts[2], t('d')].filter(Boolean);
+  // A fact is a label and a value. The value (digits plus a Latin unit) is an
+  // isolated left-to-right run, so Persian and Arabic readers see "2,140 m" and
+  // not the unit thrown to the wrong side of the number.
+  const fact = (index: number) => {
+    const item = facts[index];
+    return item ? (
+      <>
+        {item.label} <bdi dir="ltr">{item.value}</bdi>
+      </>
+    ) : null;
+  };
+  const items = [t('a'), fact(0), t('b'), fact(1), t('c'), fact(2), t('d')].filter(Boolean);
 
   const row = (hidden: boolean) => (
     <ul aria-hidden={hidden || undefined} className="flex shrink-0 items-center">
       {items.map((item, index) => (
         <li key={index} className="flex items-center whitespace-nowrap">
-          <span className="px-6 font-display text-2xl font-semibold tracking-tight text-heading sm:px-10 sm:text-4xl">
+          <span className="px-5 font-display text-lg font-semibold text-heading sm:px-8 sm:text-2xl">
             {item}
           </span>
-          <svg viewBox="0 0 24 28" aria-hidden className="h-5 w-auto shrink-0 text-aqua-500 sm:h-7">
+          <svg viewBox="0 0 24 28" aria-hidden className="h-4 w-auto shrink-0 text-aqua-500 sm:h-5">
             <path d="M12 1.5S22 12.2 22 18a10 10 0 1 1-20 0C2 12.2 12 1.5 12 1.5Z" fill="currentColor" />
           </svg>
         </li>
@@ -29,7 +40,7 @@ export async function Marquee({ locale, facts }: { locale: Locale; facts: string
   );
 
   return (
-    <div className="marquee relative overflow-hidden border-y border-hairline bg-white/70 py-6 backdrop-blur sm:py-8">
+    <div className="marquee relative overflow-hidden border-y border-hairline bg-white/70 py-4 backdrop-blur sm:py-5">
       <div className="marquee-track">
         {row(false)}
         {row(true)}

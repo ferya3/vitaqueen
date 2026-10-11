@@ -33,10 +33,10 @@ export async function QualityBento({ locale }: { locale: Locale }) {
             <Droplets aria-hidden className="pointer-events-none absolute -bottom-10 -end-10 size-72 text-white/10" strokeWidth={1} />
             <div>
               <Eyebrow tone="light" className="bg-white/15 text-white">{quality('eyebrow')}</Eyebrow>
-              <h2 className="mt-6 max-w-md text-5xl font-semibold leading-[1.02] tracking-[-0.035em] text-white [:lang(ar)_&]:leading-[1.3] [:lang(fa)_&]:leading-[1.3]">
+              <h2 className="display display-md mt-5 max-w-md text-white">
                 {quality('title')}
               </h2>
-              <p className="mt-5 max-w-md text-base leading-relaxed text-white/85 sm:text-lg">{quality('body')}</p>
+              <p className="mt-4 max-w-md text-base leading-relaxed text-white/85">{quality('body')}</p>
             </div>
             <div className="relative mt-10 flex flex-wrap gap-3">
               <ButtonLink href="/quality" variant="light" size="lg">

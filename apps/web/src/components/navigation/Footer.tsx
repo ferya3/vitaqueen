@@ -63,7 +63,7 @@ export function Footer() {
 
         <div className="mt-16 flex flex-col items-center justify-between gap-3 border-t border-white/10 py-6 text-xs text-ink-300 sm:flex-row">
           <p>
-            © {year} {siteConfig.legalName}. {t('rights')}
+            © {year} <bdi dir="ltr">{siteConfig.legalName}</bdi> {t('rights')}
           </p>
           <button
             type="button"
@@ -81,7 +81,7 @@ export function Footer() {
       <p
         aria-hidden
         dir="ltr"
-        className="relative z-10 -mb-[0.22em] select-none text-center font-[family-name:var(--font-latin)] text-[19vw] font-bold leading-none tracking-[-0.06em] text-transparent [background-clip:text] [-webkit-background-clip:text] bg-gradient-to-b from-aqua-200/40 to-aqua-400/5"
+        className="relative z-10 -mb-[0.22em] select-none text-center font-[family-name:var(--font-latin)] text-[14vw] font-bold leading-none tracking-[-0.06em] text-transparent [background-clip:text] [-webkit-background-clip:text] bg-gradient-to-b from-aqua-200/40 to-aqua-400/5"
       >
         VITAQUEEN
       </p>

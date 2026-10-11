@@ -62,7 +62,7 @@ export default async function HomePage({ params }: Props) {
           the evidence in numbers, the commitments, the ask. */}
       <Hero highlights={highlights} />
 
-      <Marquee locale={locale} facts={highlights.map((fact) => `${fact.label} ${fact.value}`)} />
+      <Marquee locale={locale} facts={highlights} />
 
       <Statement eyebrow={home('statement.eyebrow')} text={home('statement.text')} />
 

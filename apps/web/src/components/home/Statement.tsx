@@ -41,7 +41,7 @@ export function Statement({ eyebrow, text }: { eyebrow: string; text: string }) 
   return (
     <section ref={ref} className="shell section-y">
       <Eyebrow>{eyebrow}</Eyebrow>
-      <p ref={sentence} className="mt-8 max-w-6xl font-display text-4xl font-semibold leading-[1.18] tracking-[-0.03em] text-heading sm:text-5xl lg:text-6xl [:lang(ar)_&]:leading-[1.5] [:lang(fa)_&]:leading-[1.55]">
+      <p ref={sentence} className="display display-statement mt-6 max-w-4xl text-heading">
         {words.map((word, index) => (
           <span key={index} data-word className="inline">
             {word}

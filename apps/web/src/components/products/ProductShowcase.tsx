@@ -82,10 +82,10 @@ export function ProductShowcase({ products }: { products: Product[] }) {
       <div className="shell flex flex-wrap items-end justify-between gap-6">
         <div className="max-w-2xl">
           <Eyebrow>{t('eyebrow')}</Eyebrow>
-          <h2 className="mt-5 text-5xl font-semibold tracking-[-0.035em] [:lang(ar)_&]:leading-[1.3] [:lang(fa)_&]:leading-[1.3]">
+          <h2 className="display display-md mt-5">
             {t('title')}
           </h2>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-500 sm:text-lg">{t('body')}</p>
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-500">{t('body')}</p>
         </div>
         <ButtonLink href="/products" variant="outline" size="md">
           {t('cta')}
@@ -110,7 +110,7 @@ export function ProductShowcase({ products }: { products: Product[] }) {
                 {/* The volume, oversized and outlined, as the card's image */}
                 <span
                   aria-hidden
-                  className="pointer-events-none absolute -end-4 -top-6 font-display text-[10rem] font-bold leading-none tracking-tighter text-white/60 text-outline sm:text-[12rem]"
+                  className="pointer-events-none absolute -end-4 -top-6 font-display text-[7rem] font-bold leading-none text-white/60 text-outline sm:text-[9rem]"
                 >
                   {product.volumeMl >= 1000 ? formatNumber(product.volumeMl / 1000, locale) : formatNumber(product.volumeMl, locale)}
                 </span>

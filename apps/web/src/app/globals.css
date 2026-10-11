@@ -81,10 +81,7 @@
   --text-4xl: clamp(1.75rem, 2.2vw + 1.25rem, 2.75rem);
   --text-5xl: clamp(2.125rem, 3.2vw + 1.4rem, 3.75rem);
   --text-6xl: clamp(2.5rem, 5vw + 1.3rem, 5.5rem);
-  /* Display sizes for the immersive heroes and the closing call — the scale
-     at which a headline becomes the image. */
-  --text-7xl: clamp(3rem, 7.2vw + 1rem, 8rem);
-  --text-8xl: clamp(3.5rem, 10vw + 1rem, 11.5rem);
+
 
   /* --- Radii: the single loudest signal of this system -------------------- */
   --radius-xs: 0.5rem;
@@ -269,6 +266,57 @@
 @utility tabular {
   font-variant-numeric: tabular-nums lining-nums;
   font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+/* ==========================================================================
+   Display type
+   --------------------------------------------------------------------------
+   Four sizes for headlines, each capped so it never outgrows a laptop screen
+   (the first version scaled with the viewport up to 180 px and was far too
+   loud at 1366 px). Persian and Arabic get their own, smaller sizes, zero
+   letter-spacing and a taller line: negative tracking pulls apart the joined
+   letterforms of Arabic script, and Vazirmatn is optically larger than a
+   Latin face at the same font size.
+   ========================================================================== */
+
+@layer components {
+  .display {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.028em;
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+  :lang(fa) .display,
+  :lang(ar) .display {
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1.45;
+  }
+
+  /* The home hero. */
+  .display-hero { font-size: clamp(2.25rem, 1rem + 3vw, 3.9rem); line-height: 1.04; }
+  :lang(fa) .display-hero, :lang(ar) .display-hero { font-size: clamp(2rem, 0.9rem + 2.5vw, 3.2rem); line-height: 1.38; }
+
+  /* Closing call to action. */
+  .display-xl { font-size: clamp(2.25rem, 1rem + 3.2vw, 4.1rem); line-height: 1.05; }
+  :lang(fa) .display-xl, :lang(ar) .display-xl { font-size: clamp(2rem, 0.9rem + 2.7vw, 3.3rem); line-height: 1.4; }
+
+  /* Inner-page heroes. */
+  .display-lg { font-size: clamp(1.9rem, 1rem + 2.3vw, 3.25rem); line-height: 1.08; }
+  :lang(fa) .display-lg, :lang(ar) .display-lg { font-size: clamp(1.7rem, 0.9rem + 1.9vw, 2.6rem); line-height: 1.45; }
+
+  /* Section headings. */
+  .display-md { font-size: clamp(1.65rem, 0.95rem + 1.7vw, 2.6rem); line-height: 1.12; }
+  :lang(fa) .display-md, :lang(ar) .display-md { font-size: clamp(1.5rem, 0.9rem + 1.4vw, 2.1rem); line-height: 1.5; }
+
+  /* The statement sentence, set as a paragraph rather than a poster. */
+  .display-statement { font-size: clamp(1.45rem, 0.85rem + 1.6vw, 2.35rem); line-height: 1.28; text-wrap: pretty; }
+  :lang(fa) .display-statement, :lang(ar) .display-statement { font-size: clamp(1.3rem, 0.8rem + 1.3vw, 1.9rem); line-height: 1.75; }
+
+  /* Large figures in the numbers band. */
+  .display-figure { font-size: clamp(2rem, 1rem + 2.4vw, 3.4rem); line-height: 1; letter-spacing: -0.03em; }
+  :lang(fa) .display-figure, :lang(ar) .display-figure { letter-spacing: 0; }
 }
 
 /* ==========================================================================

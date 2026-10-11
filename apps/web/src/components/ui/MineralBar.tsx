@@ -37,7 +37,10 @@ export function MineralBar({
           {label}
         </span>
         <span className={cn('text-sm tabular', tone === 'light' ? 'text-aqua-300' : 'text-aqua-700')}>
-          {formatNumber(value, locale)} <span className="text-xs opacity-70">{unit}</span>
+          {/* Number then unit as one left-to-right run, in every script. */}
+          <bdi dir="ltr">
+            {formatNumber(value, locale)} <span className="text-xs opacity-70">{unit}</span>
+          </bdi>
         </span>
       </div>
       <div

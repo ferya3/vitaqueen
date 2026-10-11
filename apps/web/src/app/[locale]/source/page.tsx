@@ -112,7 +112,7 @@ export default async function SourcePage({ params }: Props) {
               {factRows.map(([label, value]) => (
                 <div key={label} className="border-b border-white/10 pb-3">
                   <dt className="text-xs uppercase tracking-[0.18em] text-ink-400">{label}</dt>
-                  <dd className="mt-1.5 text-lg text-aqua-300 tabular">{value}</dd>
+                  <dd className="mt-1.5 text-lg text-aqua-300 tabular"><bdi dir="auto">{value}</bdi></dd>
                 </div>
               ))}
             </dl>

@@ -34,17 +34,17 @@ export function PageHero({
   return (
     <section className={cn('abyss grain relative isolate overflow-hidden rounded-b-[2rem] sm:rounded-b-[3rem]', className)}>
       <DeepBackdrop bubbles={false} />
-      <div className="shell relative z-10 pb-14 pt-32 sm:pb-20 sm:pt-40">
+      <div className="shell relative z-10 pb-12 pt-28 sm:pb-16 sm:pt-36">
         {trail ? <Breadcrumbs trail={trail} tone="light" className="mb-6" /> : null}
         <Eyebrow tone="light">{eyebrow}</Eyebrow>
         <TextReveal
           as="h1"
           split="lines"
-          className="mt-5 max-w-4xl text-6xl font-semibold leading-[1.02] tracking-[-0.035em] text-white [:lang(ar)_&]:leading-[1.25] [:lang(fa)_&]:leading-[1.25]"
+          className="display display-lg mt-5 max-w-3xl text-white"
         >
           {title}
         </TextReveal>
-        {lead ? <p className="mt-6 max-w-2xl text-base leading-relaxed text-ink-200 sm:text-lg">{lead}</p> : null}
+        {lead ? <p className="mt-5 max-w-2xl text-base leading-relaxed text-ink-200">{lead}</p> : null}
         {children}
       </div>
     </section>

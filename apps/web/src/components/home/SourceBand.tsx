@@ -45,10 +45,10 @@ export async function SourceBand({
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div className="max-w-2xl">
               <Eyebrow tone="light">{numbers('eyebrow')}</Eyebrow>
-              <h2 className="mt-5 text-5xl font-semibold tracking-[-0.035em] text-white [:lang(ar)_&]:leading-[1.3] [:lang(fa)_&]:leading-[1.3]">
+              <h2 className="display display-md mt-5 text-white">
                 {numbers('title')}
               </h2>
-              <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-200 sm:text-lg">{t('body')}</p>
+              <p className="mt-4 max-w-xl text-base leading-relaxed text-ink-200">{t('body')}</p>
             </div>
             <ButtonLink href="/source" variant="glass">
               {t('cta')}

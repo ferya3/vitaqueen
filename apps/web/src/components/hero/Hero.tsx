@@ -56,7 +56,7 @@ export function Hero({ highlights, className }: HeroProps) {
             <Eyebrow tone="light">{t('eyebrow')}</Eyebrow>
           </div>
 
-          <h1 className="mt-6 text-7xl font-semibold leading-[0.95] tracking-[-0.045em] text-white sm:mt-8 [:lang(ar)_&]:leading-[1.2] [:lang(fa)_&]:leading-[1.2]">
+          <h1 className="display display-hero mt-6 text-white sm:mt-7">
             {/* One element per line: SplitText rebuilds the DOM inside each,
                 so nested markup here would be destroyed on the client. */}
             <span data-hero-line className="block">
@@ -70,11 +70,11 @@ export function Hero({ highlights, className }: HeroProps) {
             </span>
           </h1>
 
-          <p data-hero-sub className="mt-7 max-w-xl text-base leading-relaxed text-ink-200 sm:text-lg">
+          <p data-hero-sub className="mt-5 max-w-lg text-base leading-relaxed text-ink-200">
             {t('subtitle')}
           </p>
 
-          <div data-hero-actions className="mt-9 flex flex-wrap items-center gap-3">
+          <div data-hero-actions className="mt-7 flex flex-wrap items-center gap-3">
             <ButtonLink href="/products" variant="bright" size="lg">
               {t('secondaryCta')}
               <ArrowIcon />
@@ -108,8 +108,8 @@ export function Hero({ highlights, className }: HeroProps) {
               {highlights.map((fact) => (
                 <div key={fact.label} className="min-w-0">
                   <dt className="truncate text-2xs uppercase tracking-[0.18em] text-aqua-200/70">{fact.label}</dt>
-                  <dd className="mt-1.5 truncate font-display text-xl font-semibold tabular text-white sm:text-3xl">
-                    {fact.value}
+                  <dd className="mt-1.5 truncate font-display text-xl font-semibold tabular text-white sm:text-2xl">
+                    <bdi dir="ltr">{fact.value}</bdi>
                   </dd>
                 </div>
               ))}
