@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
 /**
- * One schema, used by the browser form and by the route handler.
+ * One schema, used by the browser form and by the `submitContact` Server
+ * Action.
  *
  * Client-side validation is a convenience; the server re-validates the same
  * shape because anything that only runs in the browser is advisory at best.
- * Laravel validates a third time — defence in depth is cheap here.
  */
 export const contactSchema = z.object({
   name: z.string().trim().min(2).max(120),

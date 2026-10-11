@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import { gsap, SplitText } from '@/animations/gsap';
-import { useIsomorphicLayoutEffect } from '@/hooks/useIsomorphicLayoutEffect';
+import { useGSAP } from '@gsap/react';
 import { usePointer } from '@/hooks/usePointer';
 
 /**
@@ -21,22 +21,22 @@ export function useHeroTimeline<T extends HTMLElement = HTMLDivElement>() {
   const ref = useRef<T>(null);
   const pointer = usePointer(0.06);
 
-  useIsomorphicLayoutEffect(() => {
-    const root = ref.current;
-    if (!root) return;
+  useGSAP(
+    () => {
+      const root = ref.current;
+      if (!root) return;
 
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const lines = root.querySelectorAll<HTMLElement>('[data-hero-line]');
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const lines = root.querySelectorAll<HTMLElement>('[data-hero-line]');
 
-    if (reduce) {
-      gsap.set(root.querySelectorAll('[data-hero-line], [data-hero-sub], [data-hero-actions], [data-hero-cue]'), {
-        opacity: 1,
-        y: 0,
-      });
-      return;
-    }
+      if (reduce) {
+        gsap.set(root.querySelectorAll('[data-hero-line], [data-hero-sub], [data-hero-actions], [data-hero-cue]'), {
+          opacity: 1,
+          y: 0,
+        });
+        return;
+      }
 
-    const context = gsap.context(() => {
       // Words only. Splitting to characters would break Arabic-script
       // shaping in the Persian and Arabic headlines — see
       // `src/animations/splitting.ts`.
@@ -117,10 +117,9 @@ export function useHeroTimeline<T extends HTMLElement = HTMLDivElement>() {
 
       gsap.ticker.add(onTick);
       return () => gsap.ticker.remove(onTick);
-    }, root);
-
-    return () => context.revert();
-  }, [pointer]);
+    },
+    { scope: ref, dependencies: [pointer] },
+  );
 
   return ref;
 }

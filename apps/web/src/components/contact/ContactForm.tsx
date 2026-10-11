@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { ArrowIcon } from '@/components/ui/Icons';
 import { contactSchema } from '@/lib/contact-schema';
+import { submitContact } from '@/server/actions/contact';
 import { cn } from '@/lib/cn';
 
 type Status = 'idle' | 'sending' | 'sent' | 'error';
@@ -22,17 +23,18 @@ export function ContactForm({ defaultTopic = 'general' }: { defaultTopic?: strin
     setStatus('sending');
     setErrors({});
 
-    const form = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const fields = new FormData(form);
     const payload = {
-      name: String(form.get('name') ?? ''),
-      email: String(form.get('email') ?? ''),
-      phone: String(form.get('phone') ?? ''),
-      company: String(form.get('company') ?? ''),
-      topic: String(form.get('topic') ?? 'general'),
-      subject: String(form.get('subject') ?? ''),
-      message: String(form.get('message') ?? ''),
-      website: String(form.get('website') ?? ''),
-      consent: form.get('consent') === 'on',
+      name: String(fields.get('name') ?? ''),
+      email: String(fields.get('email') ?? ''),
+      phone: String(fields.get('phone') ?? ''),
+      company: String(fields.get('company') ?? ''),
+      topic: String(fields.get('topic') ?? 'general'),
+      subject: String(fields.get('subject') ?? ''),
+      message: String(fields.get('message') ?? ''),
+      website: String(fields.get('website') ?? ''),
+      consent: fields.get('consent') === 'on',
       locale,
     };
 
@@ -44,13 +46,14 @@ export function ContactForm({ defaultTopic = 'general' }: { defaultTopic?: strin
     }
 
     try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(parsed.data),
-      });
-      setStatus(response.ok ? 'sent' : 'error');
-      if (response.ok) event.currentTarget.reset();
+      const result = await submitContact(parsed.data);
+      if (result.ok) {
+        form.reset();
+        setStatus('sent');
+      } else {
+        if (result.issues) setErrors(result.issues);
+        setStatus('error');
+      }
     } catch {
       setStatus('error');
     }
@@ -65,7 +68,10 @@ export function ContactForm({ defaultTopic = 'general' }: { defaultTopic?: strin
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid gap-5">
+    // `method="post"`: if someone submits before the script has hydrated, the
+    // browser's fallback must not put their name and message in a URL, where
+    // it would end up in history, proxy logs and the Referer header.
+    <form onSubmit={onSubmit} method="post" noValidate className="grid gap-5">
       <div className="grid gap-5 sm:grid-cols-2">
         <Field name="name" label={t('name')} required errors={errors.name} />
         <Field name="email" label={t('email')} type="email" required errors={errors.email} />
@@ -123,7 +129,7 @@ export function ContactForm({ defaultTopic = 'general' }: { defaultTopic?: strin
       </label>
 
       <div className="flex flex-wrap items-center gap-4">
-        <Button type="submit" size="lg" disabled={status === 'sending'}>
+        <Button type="submit" size="lg" magnetic sheen disabled={status === 'sending'}>
           {status === 'sending' ? t('sending') : t('submit')}
           <ArrowIcon />
         </Button>

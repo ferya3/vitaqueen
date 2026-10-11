@@ -65,7 +65,7 @@
     "parameter": "Parameter",
     "limit": "Permitted limit",
     "reduceMotionNotice": "Motion reduced to match your system preference.",
-    "sampleData": "Sample data — the published figures replace these as soon as the content system is connected."
+    "sampleData": "Sample data — replaced by the laboratory’s figures as soon as they are published."
   },
   "home": {
     "hero": {

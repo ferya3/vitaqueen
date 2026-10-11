@@ -1,50 +1,33 @@
+import { ArrowRight, ChevronDown, Download, Globe, X, type LucideProps } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
-type IconProps = { className?: string };
+/**
+ * The site's icon vocabulary, drawn from lucide-react.
+ *
+ * Wrapped rather than imported directly at each call site for two reasons:
+ * one stroke weight and size for the whole public site, and an arrow that
+ * points the way the reader is going in any script.
+ */
+type IconProps = Omit<LucideProps, 'ref'>;
 
-/** Direction-aware arrow: points the way the reader is going, in any script. */
-export function ArrowIcon({ className }: IconProps) {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      aria-hidden
-      fill="none"
-      className={cn('h-4 w-4 rtl:-scale-x-100', className)}
-    >
-      <path d="M3 10h13M11 5l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+const base = 'size-4 shrink-0';
+
+export function ArrowIcon({ className, ...props }: IconProps) {
+  return <ArrowRight aria-hidden strokeWidth={1.75} className={cn(base, 'rtl:-scale-x-100', className)} {...props} />;
 }
 
-export function ChevronIcon({ className }: IconProps) {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden fill="none" className={cn('h-4 w-4', className)}>
-      <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+export function ChevronIcon({ className, ...props }: IconProps) {
+  return <ChevronDown aria-hidden strokeWidth={1.75} className={cn(base, className)} {...props} />;
 }
 
-export function DownloadIcon({ className }: IconProps) {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden fill="none" className={cn('h-4 w-4', className)}>
-      <path d="M10 3v9m0 0 3.5-3.5M10 12 6.5 8.5M4 15.5h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+export function DownloadIcon({ className, ...props }: IconProps) {
+  return <Download aria-hidden strokeWidth={1.75} className={cn(base, className)} {...props} />;
 }
 
-export function CloseIcon({ className }: IconProps) {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden fill="none" className={cn('h-4 w-4', className)}>
-      <path d="M5 5l10 10M15 5 5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
+export function CloseIcon({ className, ...props }: IconProps) {
+  return <X aria-hidden strokeWidth={1.75} className={cn(base, className)} {...props} />;
 }
 
-export function GlobeIcon({ className }: IconProps) {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden fill="none" className={cn('h-4 w-4', className)}>
-      <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.4" />
-      <path d="M3 10h14M10 3c2 2.4 2 11.6 0 14M10 3c-2 2.4-2 11.6 0 14" stroke="currentColor" strokeWidth="1.4" />
-    </svg>
-  );
+export function GlobeIcon({ className, ...props }: IconProps) {
+  return <Globe aria-hidden strokeWidth={1.6} className={cn(base, className)} {...props} />;
 }

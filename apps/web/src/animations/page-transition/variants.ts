@@ -1,4 +1,4 @@
-import type { Variants, Transition } from 'motion/react';
+import type { Variants, Transition } from 'framer-motion';
 
 /**
  * Page transitions are deliberately short. A 900 ms curtain looks impressive
@@ -9,10 +9,10 @@ export const pageTransition: Transition = {
   ease: [0.22, 1, 0.36, 1],
 };
 
+/** Opacity only — see `PageTransition` for why there is no translate. */
 export const pageVariants: Variants = {
-  initial: { opacity: 0, y: 12 },
-  enter: { opacity: 1, y: 0, transition: pageTransition },
-  exit: { opacity: 0, y: -8, transition: { ...pageTransition, duration: 0.28 } },
+  initial: { opacity: 0 },
+  enter: { opacity: 1, transition: pageTransition },
 };
 
 export const overlayVariants: Variants = {

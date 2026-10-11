@@ -57,8 +57,10 @@ according to the locale's script.
 | Latin, Cyrillic | **Plus Jakarta Sans** | Geometric with slightly rounded terminals, which is what the rounded glass panels need. Variable, 400–800 in one file. |
 | Persian, Arabic | **Vazirmatn** | Proper Persian digits, correct joining, a full weight range, and an open licence. |
 
-Both are self-hosted by `next/font/google`, so there is no runtime request to a
-third-party font host and `font-src` in the CSP stays `'self'`.
+Both are variable fonts installed from npm through Fontsource
+(`@fontsource-variable/vazirmatn`, `@fontsource-variable/plus-jakarta-sans`),
+so neither the build nor the browser ever contacts a third-party font host and
+`font-src` in the CSP stays `'self'`.
 
 The scale is deliberately **denser** than the previous one: `--text-base` is
 15px, `--text-5xl` tops out at 3.75rem rather than 5rem, and headings are
@@ -93,7 +95,7 @@ Everything uses logical properties — `padding-inline`, `text-start`, `end-0`,
 ## Motion tokens
 
 Durations and curves live in the same `@theme` block as the colours, so the CSS
-transitions, the GSAP timelines and the Motion components all move with the
+transitions, the GSAP timelines and the Framer Motion components all move with the
 same physical character. `motionTokens` in `src/animations/gsap.ts` mirrors them
 for JavaScript.
 
@@ -111,8 +113,10 @@ Primitives in `components/ui`:
 | Component | Notes |
 | --- | --- |
 | `Section` / `Shell` / `SectionHead` | Vertical rhythm and tone; `SectionHead` fixes eyebrow → title → lede order and spacing so no two sections drift apart. `tone="deep"` renders a rounded ink slab inside the shell rather than a full-bleed dark band. |
-| `Button` / `ButtonLink` | `primary` is the only saturated fill in the system; `secondary` is glass so it sits on the aurora instead of punching a hole in it. Magnetic cursor effect on precise pointers; the magnetic ref sits on a wrapper, so it does not depend on how `next-intl` forwards refs. |
-| `Card` | The one surface. `glass` by default, `solid` where a blur behind small text would cost legibility, `dark` for the inverse pane. |
+| `Button` / `ButtonLink` | shadcn/ui-style: one `cva` recipe (`buttonVariants`, in its own module so server components can use it) and `asChild` through Radix `Slot`. `primary` is the only saturated fill in the system; `secondary` is glass so it sits on the aurora instead of punching a hole in it. `ButtonLink` adds the sheen and the magnetic pull; its magnetic ref sits on a wrapper, so it does not depend on how `next-intl` forwards refs. |
+| `Input` / `Textarea` / `Select` / `Label` | Native elements with one class recipe each (`Field.tsx`), so they compose with plain forms and Server Actions. |
+| `Card` | The one surface, with `CardHeader` / `CardTitle` / `CardContent` / `CardFooter`. `glass` by default, `solid` where a blur behind small text would cost legibility, `dark` for the inverse pane. |
+| Icons | lucide-react, wrapped in `Icons.tsx` for one stroke weight and an arrow that flips in RTL. |
 | `Eyebrow` | A tinted pill, not a hairline rule — on a gradient ground a thin rule reads as an artefact. |
 | `DataTable` | Below `sm` each row becomes its own block (heading + label/value pairs); from `sm` up, a real table inside a glass panel. A six-column analysis sheet must never make the page scroll sideways. |
 | `MineralBar` | Bars scale against the largest value in the set, not an absolute maximum — otherwise sodium at 8 mg/L is an invisible sliver and the chart says nothing. |

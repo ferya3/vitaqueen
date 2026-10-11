@@ -43,8 +43,8 @@ function buildContentSecurityPolicy(nonce: string, isDev: boolean, isSecure: boo
     `media-src 'self' blob:`,
     // Fonts are self-hosted by `next/font`, so no third-party font origin.
     `font-src 'self'`,
-    // The API is only ever called server-side, so the browser needs no
-    // third-party connect target at all.
+    // Data is read on the server and forms post to Server Actions on this
+    // origin, so the browser needs no third-party connect target at all.
     `connect-src 'self' ${isDev ? 'ws: http://localhost:*' : ''}`,
     `worker-src 'self' blob:`,
     `frame-ancestors 'none'`,
@@ -78,7 +78,8 @@ const SECURITY_HEADERS: Array<[string, string]> = [
 ];
 
 /**
- * Locale routing and security headers in one pass.
+ * Locale routing and security headers in one pass, for the public site and
+ * the admin panel.
  *
  * This is Next 16's `proxy` convention (formerly `middleware`).
  *
@@ -101,6 +102,20 @@ export default function proxy(request: NextRequest) {
 
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const csp = buildContentSecurityPolicy(nonce, isDev, isSecure);
+
+  // The admin panel is Persian-only and lives outside the locale tree. It gets
+  // the same CSP, plus headers that keep it out of caches and search engines.
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('x-nonce', nonce);
+    requestHeaders.set('content-security-policy', csp);
+
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    applyHeaders(response, csp);
+    response.headers.set('Cache-Control', 'no-store');
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    return response;
+  }
 
   const hasLocale = locales.some(
     (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),
@@ -135,7 +150,8 @@ export default function proxy(request: NextRequest) {
       path: '/',
       maxAge: ONE_YEAR,
       sameSite: 'lax',
-      secure: !isDev,
+      // Only over TLS: a Secure cookie sent over plain HTTP is dropped by the browser.
+      secure: isSecure,
       httpOnly: false,
     });
   }
@@ -150,5 +166,5 @@ function applyHeaders(response: NextResponse, csp: string) {
 
 export const config = {
   // Everything except Next internals and files that already live on disk.
-  matcher: ['/((?!api|_next/static|_next/image|.*\\..*).*)'],
+  matcher: ['/((?!uploads|_next/static|_next/image|.*\\..*).*)'],
 };

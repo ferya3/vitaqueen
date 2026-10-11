@@ -8,6 +8,15 @@ const nextConfig: NextConfig = {
   // Never advertise the framework version to a scanner.
   poweredByHeader: false,
 
+  experimental: {
+    // Admin forms carry their uploads (images up to 12 MB each, PDFs up to
+    // 20 MB) in the same Server Action request as the text fields. Both the
+    // action parser and the proxy, which buffers bodies, need the headroom;
+    // the per-file limits are enforced in `src/server/media.ts`.
+    serverActions: { bodySizeLimit: '40mb' },
+    proxyClientMaxBodySize: '40mb',
+  },
+
   images: {
     // AVIF first: a hero still drops from ~380 KB to ~120 KB at the same
     // perceived quality, which matters more here than anywhere else.

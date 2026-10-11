@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import { gsap, SplitText } from '@/animations/gsap';
-import { useIsomorphicLayoutEffect } from '@/hooks/useIsomorphicLayoutEffect';
+import { useGSAP } from '@gsap/react';
 import { resolveSplitType } from '@/animations/splitting';
 import { cn } from '@/lib/cn';
 
@@ -32,15 +32,17 @@ export function TextReveal({
 }: TextRevealProps) {
   const ref = useRef<HTMLHeadingElement>(null);
 
-  useIsomorphicLayoutEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  useGSAP(
+    (_context, contextSafe) => {
+      const element = ref.current;
+      if (!element) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    let instance: SplitText | null = null;
+      let instance: SplitText | null = null;
+      let cancelled = false;
 
-    const context = gsap.context(() => {
       const run = () => {
+        if (cancelled) return;
         // Arabic and Persian downgrade `chars` to `words` so glyph joining
         // survives the split — see `src/animations/splitting.ts`.
         const granularity = resolveSplitType(split, element);
@@ -51,11 +53,7 @@ export function TextReveal({
         });
 
         const targets =
-          granularity === 'lines'
-            ? instance.lines
-            : granularity === 'words'
-              ? instance.words
-              : instance.chars;
+          granularity === 'lines' ? instance.lines : granularity === 'words' ? instance.words : instance.chars;
 
         gsap.from(targets, {
           yPercent: 118,
@@ -69,16 +67,21 @@ export function TextReveal({
       };
 
       // Splitting before webfonts settle measures the fallback metrics and the
-      // lines re-wrap mid-animation.
+      // lines re-wrap mid-animation. The deferred run is wrapped with
+      // `contextSafe` so its tweens are still reverted on unmount.
       if (document.fonts?.status === 'loaded') run();
-      else document.fonts?.ready.then(run).catch(run);
-    }, element);
+      else {
+        const deferred = contextSafe ? contextSafe(run) : run;
+        document.fonts?.ready.then(deferred).catch(deferred);
+      }
 
-    return () => {
-      instance?.revert();
-      context.revert();
-    };
-  }, [children, split, delay, start]);
+      return () => {
+        cancelled = true;
+        instance?.revert();
+      };
+    },
+    { scope: ref, dependencies: [children, split, delay, start] },
+  );
 
   return (
     <Tag ref={ref} className={cn(className)}>

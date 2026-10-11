@@ -16,21 +16,9 @@ import { buildMetadata } from '@/lib/seo';
 import { breadcrumbSchema, productSchema } from '@/lib/schema';
 import { getProduct, getProducts, getWaterAnalysis } from '@/services/content';
 import { formatVolume } from '@/lib/format';
-import { locales, type Locale } from '@/i18n/routing';
-import { seedProducts } from '@/content/seed';
+import type { Locale } from '@/i18n/routing';
 
 type Props = { params: Promise<{ locale: Locale; slug: string }> };
-
-/**
- * Pre-generates the known formats for every locale. Anything the CMS adds later
- * is rendered on demand and then cached, so a new product does not need a
- * deploy to become reachable.
- */
-export function generateStaticParams() {
-  return locales.flatMap((locale) =>
-    seedProducts(locale).map((product) => ({ locale, slug: product.slug })),
-  );
-}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
@@ -95,7 +83,19 @@ export default async function ProductPage({ params }: Props) {
         <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-12">
           <div className="glass flex items-center justify-center rounded-2xl p-10 sm:p-12">
             <div className="h-72 sm:h-80">
-              <BottleGlyph volumeMl={product.data.volumeMl} />
+              {product.data.images[0] ? (
+                // Uploads are resized WebP already; see `src/server/media.ts`.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={product.data.images[0].src}
+                  alt={product.data.images[0].alt}
+                  width={product.data.images[0].width}
+                  height={product.data.images[0].height}
+                  className="h-full w-auto object-contain"
+                />
+              ) : (
+                <BottleGlyph volumeMl={product.data.volumeMl} />
+              )}
             </div>
           </div>
 

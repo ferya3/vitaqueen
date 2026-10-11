@@ -8,23 +8,25 @@ and where the boundary between the two sits.
 ```
 Cloudflare   WAF · DDoS · bot rules · rate limiting · Turnstile · TLS   [account config]
     │
-nginx        Cloudflare-only origin · per-route limits · no PHP under uploads   [infra/nginx]
+nginx        Cloudflare-only origin · per-route limits · body limits    [infra/nginx]
     │
-Next.js      nonce CSP · security headers · locale routing · form gate   [src/proxy.ts]
+proxy.ts     nonce CSP · security headers · locale routing · admin no-store   [src/proxy.ts]
     │
-Laravel      validation · policies · Sanctum · 2FA · audit · rate limits   [apps/api]
+Server       requireAdmin on every page and action · roles · 2FA · audit ·
+             DB-backed rate limits · upload re-encoding · escaped markup  [src/server]
     │
-MySQL        private interface · least-privileged user   [ops]
+SQLite       a file under DATA_DIR, owned by the app user, never served    [ops]
 ```
 
-No single layer is load-bearing on its own. The rate limiter appears three
-times on purpose.
+No single layer is load-bearing on its own. Rate limits appear at three of
+them on purpose.
 
 ## Front end
 
 ### Content Security Policy
 
-`src/proxy.ts` mints a nonce per request and sets:
+`src/proxy.ts` mints a nonce per request — for the public site and the admin
+panel alike — and sets:
 
 ```
 default-src 'self';
@@ -37,220 +39,196 @@ frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self';
 upgrade-insecure-requests        ← only when the request arrived over TLS
 ```
 
-Three notes:
-
 - **`strict-dynamic`** lets the Next bootstrap load its own chunks while still
-  refusing any script the nonce did not authorise.
-- **`style-src 'unsafe-inline'`** is the one concession. Next and Motion both
-  set style attributes at runtime and there is no nonce-based alternative for
-  those.
-- **`connect-src 'self'`** is possible because the browser never calls the API —
-  the API origin is not even in the client bundle.
-- **`upgrade-insecure-requests` is conditional.** It is emitted only when
-  `x-forwarded-proto` (nginx, Cloudflare) or the connection itself says https.
-  On a plain-HTTP origin it rewrites every stylesheet, script and font request
-  to `https://`, and if nothing is listening for TLS on that port the page
-  renders unstyled with no error that explains why. It protects an https page;
-  on an http one it only breaks things.
-
-Getting a real nonce is the reason locale routing is hand-written rather than
-delegated. Owning the response is the only way to rewrite the request headers
-Next reads the nonce from.
+  refusing any script the nonce did not authorise. One consequence found the
+  hard way: Next loads a `template.tsx` chunk without the nonce, so the page
+  transition lives in the layout instead.
+- **`style-src 'unsafe-inline'`** is the one concession: Next, Framer Motion and
+  GSAP set style attributes at runtime.
+- **`connect-src 'self'`**: data is read on the server and forms post to
+  Server Actions on the same origin.
+- **`font-src 'self'`**: fonts are bundled from npm (Fontsource), never fetched
+  from Google.
+- **`upgrade-insecure-requests` is conditional.** On a plain-HTTP origin it
+  rewrites every asset request to `https://`, and the page renders unstyled with
+  no error that explains why.
 
 Also set: `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`,
-`Permissions-Policy` (camera, microphone, geolocation, payment and FLoC all
-off), `Cross-Origin-Opener-Policy`, `Cross-Origin-Resource-Policy` and HSTS.
+`Permissions-Policy`, `Cross-Origin-Opener-Policy`,
+`Cross-Origin-Resource-Policy` and HSTS. Admin responses add
+`Cache-Control: no-store` and `X-Robots-Tag: noindex, nofollow`.
 
 ### Contact form
 
-Four gates before a message reaches the API:
+1. Zod validation in the browser (a convenience).
+2. The same schema again in the `submitContact` Server Action.
+3. A honeypot field; a bot that fills it is told it succeeded.
+4. Cloudflare Turnstile, verified server-side when `TURNSTILE_SECRET_KEY` is set.
+5. Five submissions per ten minutes per address, counted in SQLite so a restart
+   does not reset it.
 
-1. Zod validation in the browser (a convenience, nothing more).
-2. The same Zod schema again in the route handler — the browser is outside the
-   trust boundary.
-3. A honeypot field. A filled hidden field means a bot, and a bot gets a silent
-   `204`.
-4. Cloudflare Turnstile, verified server-side when `TURNSTILE_SECRET_KEY` is
-   configured.
+The form also carries `method="post"`: if someone submits before the script has
+hydrated, the browser's native fallback must not put their name and message in
+a URL, where it would land in history, logs and the Referer header.
 
-Plus a per-IP limiter in the route handler (five per ten minutes). It is
-per-instance and resets on deploy — the authoritative limits are in Laravel and
-at the edge. The upstream response body is never echoed to the client: it can
-carry stack traces or field names a public form has no business learning.
-
-## Back end
+## Admin panel
 
 ### Authentication
 
-- **Argon2id** (`config/hashing.php`), 64 MiB / 4 iterations / 2 threads. Tune
-  on the production hardware: too low is cheap to attack, too high turns the
-  login endpoint into its own denial of service.
-- **Rate limited by email *and* address.** By IP alone, a botnet spreads the
-  attack; by email alone, one attacker locks every account out. Both keys.
-- **Constant work on failure.** An unknown email still spends the cost of a
-  hash, so response timing cannot answer "does this account exist?".
-- **One generic failure message.** Wrong password, disabled account and unknown
-  user are indistinguishable from outside.
-- **Every attempt audited**, successful or not. A brute-force run is only
-  visible if the failures were written down.
-- **Short-lived Sanctum tokens**, one per device, with abilities derived from
-  the role. `sanctum:prune-expired` runs daily.
+- **scrypt** (`node:crypto`), N = 2¹⁵, r = 8, p = 1, 64-byte key, 16-byte salt.
+  Parameters are stored with each hash (`scrypt$N$r$p$salt$hash`) and a login
+  re-hashes anything weaker than today's setting.
+- **Rate limited by address *and* account**: 20 failures per 15 minutes per IP,
+  8 per account. By IP alone a botnet spreads the attack; by account alone one
+  attacker locks everyone out.
+- **Constant work on failure.** An unknown email is verified against a dummy
+  hash, so timing cannot reveal which emails have accounts.
+- **One generic failure message**, and every attempt audited.
+- Minimum password length 12; generated passwords are 20 characters from an
+  alphabet without look-alikes and shown exactly once.
+
+### Sessions
+
+- The cookie (`vq_admin`) holds 32 random bytes; the database holds only their
+  SHA-256. A copy of the database contains no usable session.
+- `HttpOnly`, `SameSite=Lax`, `Path=/admin`, and `Secure` whenever the request
+  arrived over TLS. Scoping to `/admin` keeps it off every public request.
+- 12-hour absolute lifetime, 2-hour idle timeout.
+- The session is **re-issued under a new token** when the second factor is
+  passed. Changing a password ends every other session; a role change, a
+  deactivation or an admin password reset ends all of that user's sessions.
 
 ### Two-factor authentication
 
-TOTP, required for super admin, admin and editor
-(`vitaqueen.security.two_factor_required_roles`). `EnsureTwoFactorIsEnabled`
-blocks a privileged account that has not enrolled, while leaving the enrolment
-endpoints reachable — otherwise the requirement would lock people out of the
-screens that satisfy it.
+TOTP (RFC 6238, SHA-1, 6 digits, 30 s), implemented on `node:crypto`. Required
+for editor, admin and super admin: such an account can reach only the
+enrolment screen until it has confirmed a code.
 
-The secret is encrypted at rest, and recovery codes are stored **hashed**: if
-the table leaks, the codes in it are not usable, which is the entire point of
-having them. The pending secret lives in the cache for ten minutes during
-enrolment, so a setup abandoned halfway never becomes the thing that locks
-someone out.
+- Secrets and recovery-code hashes are encrypted at rest with AES-256-GCM under
+  a key derived from `APP_SECRET`; a database dump alone yields neither.
+- Each accepted step is recorded, so a code cannot be replayed inside its window.
+- Ten single-use recovery codes, stored as SHA-256 hashes, shown once.
+- Regenerating codes or disabling 2FA asks for a current code; a lost phone is
+  recovered by an admin ("reset 2FA") or on the server with
+  `npm run db:reset-2fa`.
 
 ### Authorisation
 
-Roles are ordered — `super_admin` > `admin` > `editor` > `content_manager` —
-and policies ask `atLeast()` rather than comparing strings.
+`requireAdmin(minRole)` runs at the top of every admin page **and every Server
+Action**. Server Actions are public HTTP endpoints regardless of which page
+renders the form. Modules marked `'use server'` export only actions; anything
+that takes a user id or similar lives in a plain server-only module, because
+every export of a `'use server'` file is callable from the internet.
 
 | Action | Minimum role |
 | --- | --- |
-| Read and edit content | content manager |
-| Upload media | content manager |
-| Publish, delete content, delete media | editor |
-| Enter a water analysis | editor |
-| Read the enquiry inbox | editor |
-| Edit or withdraw a published analysis | admin |
-| Read the audit log, manage users | admin |
+| Read the panel, write and edit content, upload media | content manager |
+| Publish, unpublish, delete content and media | editor |
+| Read and handle enquiries | editor |
+| Delete enquiries, manage users, read the audit log | admin |
 | Delete a user account | super admin |
 
-Two constraints worth stating: nobody can assign a role above their own, and
-changing a role, password or active flag deletes that account's tokens so no
-live token keeps the old abilities.
+Nobody can assign a role above their own or edit a user who outranks them, and
+nobody can change their own role or deactivate themselves.
+
+Next.js checks the `Origin` of every Server Action request against the host,
+which is the CSRF defence for the panel; nginx must pass `Host` through
+unchanged (the shipped configs do).
 
 ### File uploads
 
-The threat is not an ugly picture. It is `logo.php`, or `logo.php.jpg`, or a
-JPEG whose bytes are a PHP script.
+- The browser's filename and type are never trusted. Images are **decoded and
+  re-encoded by sharp** to WebP (max edge 2560 px, EXIF orientation applied,
+  all metadata dropped). Whatever else the file contained — GPS coordinates, a
+  polyglot payload — does not survive.
+- `limitInputPixels` (50 MP) stops decompression bombs.
+- PDFs must begin with `%PDF-` and are served with
+  `Content-Security-Policy: sandbox`.
+- SVG is refused: it is a document that can execute script.
+- Stored names are 24 random hex characters under `YYYY/MM/`; the `/uploads`
+  route accepts only paths of exactly that shape, so there is nothing to
+  traverse.
+- Limits: 12 MB per image, 20 MB per PDF, 40 MB per request, 60 uploads per
+  user per hour in the media library.
 
-- The extension is derived from the **sniffed** MIME type, never from the name
-  the browser sent.
-- The MIME type must be on the allow-list for the requested category.
-- Filenames containing `.php`, `.phar`, `.phtml`, `.cgi`, `.htaccess` and
-  friends — in any position — are refused outright. The stored name is a random
-  ULID, so they could not reach disk anyway, but a file called
-  `invoice.php.pdf` is not a mistake.
-- Per-category size ceilings: 8 MB images, 20 MB documents, 200 MB video.
-- SVG is refused unless `VITAQUEEN_ALLOW_SVG` is deliberately set. An SVG is a
-  document that can execute script.
-- Documents go to a **private** disk and are served through 15-minute signed
-  URLs. Only images are web-readable.
-- nginx serves both upload roots through `internal` locations with no PHP
-  handler in scope, so nothing under them is executable even if it got there.
+### Rich text
 
-### Input and output
-
-- `FormRequest` on every write, with `array:fa,en,ar,ru` on translatable fields
-  so a typo'd locale key cannot silently create a fifth language.
-- HTML from the editor is sanitised **on write** by HTMLPurifier against a
-  narrow allow-list: no `script`, no `iframe`, no inline styles, no `on*`
-  handlers, no `javascript:` or `data:` URLs. Sanitising on read would mean
-  every future consumer has to remember to do it too.
-- Errors render as JSON on every `api/*` route, and with `APP_DEBUG=false`
-  Laravel returns `{"message": "Server Error"}` and nothing else. There is
-  deliberately no custom catch-all renderer on top of that: an over-eager one
-  swallows the exceptions the framework renders correctly and turns a `422`
-  into a `500`. The test suite runs with debug off for the same reason.
-- `SecurityHeaders` puts `default-src 'none'; sandbox` on API responses: JSON is
-  never a document.
-
-### Rate limits
-
-| Bucket | Limit | Key |
-| --- | --- | --- |
-| `public-api` | 120/min | IP — skipped for the internal renderer token |
-| `contact` | 3/min, 30/day | IP |
-| `login` | 5/min | IP and email |
-| `uploads` | 20/min | User |
-
-The Next.js renderer is one machine serving every visitor, so a per-IP limit
-would throttle the whole site on a cold cache. It identifies itself with
-`INTERNAL_API_TOKEN`, compared with `hash_equals`.
-
-`TRUSTED_PROXIES` must name Cloudflare and nginx explicitly. A wildcard there
-lets anyone who reaches the origin forge `X-Forwarded-For` and walk past every
-per-IP limit in this table.
+The CMS stores what editors type, never HTML. `renderMarkup()` escapes the
+whole input first and only then emits the handful of tags it recognises; links
+are limited to `https?:`, `mailto:` and site-relative paths.
 
 ### Audit log and retention
 
-Every create, update and delete is recorded with the actor, the IP, the
-timestamp, the resource and the **diff**. There is no update or delete endpoint:
-an audit log you can edit is a log you cannot cite.
+Every create, update, delete, login (successful or not), 2FA event, upload and
+password change is recorded with actor, IP, user agent and the names of the
+fields that changed — never values, so no secret ends up in the log. The
+application has no way to edit or delete a row.
 
-`vitaqueen:prune` runs daily and enforces two clocks:
+Retention runs daily (from the dashboard, or `npm run db:prune` from cron):
 
-- Audit rows: deleted after `AUDIT_RETENTION_DAYS` (default 730).
-- The IP address and user agent on a contact message: stripped after
-  `CONTACT_PII_RETENTION_DAYS` (default 90), while the enquiry itself is kept.
-  They exist to investigate abuse; after that window they are personal data with
-  no purpose.
+- audit rows older than `AUDIT_RETENTION_DAYS` (730) are deleted;
+- IP and user agent on enquiries older than `CONTACT_PII_RETENTION_DAYS` (90)
+  are stripped, the enquiry itself kept;
+- expired sessions and rate-limit counters are removed.
 
 ## Infrastructure
 
-### Database
+### The process and the data
 
-```
-Internet  ──✗──  MySQL
-```
-
-Bind MySQL to the private interface or a socket. Port 3306 must not be reachable
-from the internet, and the application connects as `vitaqueen_app` with grants
-limited to its own schema — never `root`.
+- The site runs under pm2 as an **unprivileged user** (the installer refuses
+  root), bound to `127.0.0.1:3000`. Nothing outside the machine reaches it
+  except through nginx.
+- `DATA_DIR` (default `apps/web/data`) holds the database and uploads, mode
+  0750, owned by that user. It is outside anything nginx serves directly.
+- `.env.local` is mode 0600 and holds `APP_SECRET`.
 
 ### nginx
 
+`infra/nginx/vitaqueen.conf` is the production origin; install
+`infra/nginx/snippets/vitaqueen-proxy.conf` alongside it.
+
 - Only Cloudflare IP ranges may reach the origin; refresh the list on deploy.
-- `real_ip_header CF-Connecting-IP`, so limits key on the visitor.
-- Per-route limit zones: pages 30 r/s, API 10 r/s, contact 1 r/s.
-- `/api/v1/admin/` is IP-restricted at the edge of the origin as well. Uncomment
-  the office and VPN ranges, and put Cloudflare Access in front.
-- `server_tokens off`, `X-Powered-By` hidden, dotfiles and framework
-  directories denied.
+- `real_ip_header CF-Connecting-IP`; nginx then **sets** `X-Real-IP` and
+  `X-Forwarded-For` and clears any client-supplied `CF-Connecting-IP`. The
+  application reads `X-Real-IP` first, so rate limits and the audit log cannot
+  be fooled by a forged header.
+- Limit zones: pages 30 r/s, admin 10 r/s, form POSTs 1 r/s.
+- Body size 2 MB, raised to 40 MB under `/admin` only.
+- `/admin` has an IP allow-list ready to uncomment; put Cloudflare Access in
+  front as well.
 
-### Cloudflare (account configuration, not in this repository)
+`infra/nginx/vitaqueen-http.conf` is a plain-HTTP setup for reaching a fresh
+server by IP. It is not a production configuration.
 
-Enable: DNS proxying, Full (strict) TLS with an origin certificate, HSTS
+### Cloudflare (account configuration)
+
+Enable DNS proxying, Full (strict) TLS with an origin certificate, HSTS
 preload, WAF managed rules, DDoS protection, bot fight mode, rate limiting on
-`/api/v1/contact` and `/api/v1/admin/*`, cache rules for `/_next/static/*` and
-`/media/*`, and Turnstile on the contact form. Consider Cloudflare Access in
-front of the admin API instead of relying only on IP allow-lists.
+POSTs and on `/admin/*`, cache rules for `/_next/static/*` and `/uploads/*`,
+Turnstile on the contact form, and Cloudflare Access in front of `/admin`.
 
 ### Backups
 
-Daily database dump, weekly full backup, **stored off the production host**. A
-backup on the same server as the site is, security-wise, close to keeping the
-safe key inside the safe. Restore-test on a schedule; an untested backup is a
-hypothesis.
+`npm run db:backup` writes a consistent copy with `VACUUM INTO` while the site
+runs. Back up that file **and `DATA_DIR/uploads`**, daily, **off the server**,
+and restore-test on a schedule. Copying the live `.db` with `cp` while WAL is
+active is not a backup.
 
 ### Monitoring
 
-Sentry for both applications, uptime checks against `/up` (Laravel's health
-endpoint, already routed) and the front end, plus nginx access and error logs,
-Laravel logs, and the audit log. Alert on: repeated `login_failed` from one
-address, an unexpected `two_factor_disabled`, and a 5xx rate above baseline.
+`pm2 logs vitaqueen`, nginx access and error logs, and the audit log. Alert on
+repeated `login_failed` from one address, an unexpected `two_factor_disabled`,
+and a 5xx rate above baseline.
 
 ## Deployment checklist
 
-- [ ] `APP_DEBUG=false`, `APP_ENV=production`, `APP_KEY` generated
-- [ ] `TRUSTED_PROXIES` names Cloudflare and nginx — never `*`
-- [ ] `INTERNAL_API_TOKEN` set on both sides and rotated on a schedule
-- [ ] `REQUIRE_API=true` on the front end once the CMS is live
-- [ ] `NEXT_PUBLIC_ENV=production` so `robots.txt` opens; keep staging closed
-- [ ] MySQL not listening publicly; app user is not `root`
-- [ ] Redis password set and bound to localhost
-- [ ] `php artisan config:cache route:cache`
-- [ ] Scheduler running (`vitaqueen:prune`, `sanctum:prune-expired`)
-- [ ] First admin has enrolled 2FA and stored the recovery codes
-- [ ] Off-site backups running and restore-tested
+- [ ] Site runs as an unprivileged user; the installer's temporary sudoers file is removed
+- [ ] `APP_SECRET` set (the installer generates it); `.env.local` is 0600
+- [ ] `NEXT_PUBLIC_SITE_URL` is the real domain and `NEXT_PUBLIC_ENV=production`; staging stays closed
+- [ ] nginx from `infra/nginx/vitaqueen.conf`, Cloudflare-only origin, TLS origin certificate
+- [ ] Port 3000 not reachable from outside (`ss -ltnp` shows 127.0.0.1)
+- [ ] `/admin` behind an IP allow-list and/or Cloudflare Access
+- [ ] First admin signed in, enrolled 2FA and stored the recovery codes
+- [ ] Real laboratory figures entered; "sample data" flags cleared
+- [ ] Legal pages written and published
+- [ ] `npm run db:backup` and `DATA_DIR/uploads` copied off the server daily, restore-tested

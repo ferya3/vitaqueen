@@ -4,7 +4,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { PageHero } from '@/components/hero/PageHero';
 import { Section } from '@/components/ui/Section';
-import { apiFetch } from '@/services/api';
+import { getPage } from '@/services/content';
 import { buildMetadata } from '@/lib/seo';
 import { locales, type Locale } from '@/i18n/routing';
 
@@ -12,8 +12,6 @@ type Props = { params: Promise<{ locale: Locale; slug: string }> };
 
 const LEGAL_SLUGS = ['privacy', 'terms', 'cookies'] as const;
 type LegalSlug = (typeof LEGAL_SLUGS)[number];
-
-type CmsPage = { title: string; body: string; updatedAt?: string };
 
 export function generateStaticParams() {
   return locales.flatMap((locale) => LEGAL_SLUGS.map((slug) => ({ locale, slug })));
@@ -24,13 +22,7 @@ export function generateStaticParams() {
  * an AI or a developer invented is worse than an honest "not published yet",
  * because visitors and regulators both read it as a binding statement.
  */
-async function loadPage(locale: Locale, slug: string): Promise<CmsPage | null> {
-  try {
-    return await apiFetch<CmsPage>(`/pages/${slug}`, { locale, tags: ['pages', `page:${slug}`] });
-  } catch {
-    return null;
-  }
-}
+const loadPage = getPage;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
@@ -46,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     locale,
     path: `/legal/${slug}`,
     title,
-    description: title,
+    description: page?.description ?? title,
     siteName: meta('siteName'),
     // Nothing is gained by indexing an unpublished policy.
     noindex: !page,

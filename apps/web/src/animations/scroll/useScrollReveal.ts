@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef } from 'react';
+import { useGSAP } from '@gsap/react';
 import { gsap, ScrollTrigger } from '@/animations/gsap';
-import { useIsomorphicLayoutEffect } from '@/hooks/useIsomorphicLayoutEffect';
 
 export type RevealDirection = 'up' | 'down' | 'start' | 'scale' | 'fade';
 
@@ -33,30 +33,30 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>({
 }: Options = {}) {
   const ref = useRef<T>(null);
 
-  useIsomorphicLayoutEffect(() => {
-    const element = ref.current;
-    if (!element) return;
+  useGSAP(
+    () => {
+      const element = ref.current;
+      if (!element) return;
 
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) {
-      element.setAttribute('data-revealed', 'true');
-      element
-        .querySelectorAll('[data-reveal-item]')
-        .forEach((item) => item.setAttribute('data-revealed', 'true'));
-      return;
-    }
+      const items = element.querySelectorAll<HTMLElement>('[data-reveal-item]');
+      const targets = items.length > 0 ? Array.from(items) : [element];
+      const markRevealed = () => {
+        element.setAttribute('data-revealed', 'true');
+        targets.forEach((target) => target.setAttribute('data-revealed', 'true'));
+      };
 
-    const items = element.querySelectorAll<HTMLElement>('[data-reveal-item]');
-    const targets = items.length > 0 ? Array.from(items) : [element];
-    const rtl = document.documentElement.dir === 'rtl';
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        markRevealed();
+        return;
+      }
 
-    const from: gsap.TweenVars = { opacity: 0 };
-    if (direction === 'up') from.y = 40;
-    if (direction === 'down') from.y = -40;
-    if (direction === 'start') from.x = rtl ? 40 : -40;
-    if (direction === 'scale') from.scale = 1.06;
+      const rtl = document.documentElement.dir === 'rtl';
+      const from: gsap.TweenVars = { opacity: 0 };
+      if (direction === 'up') from.y = 40;
+      if (direction === 'down') from.y = -40;
+      if (direction === 'start') from.x = rtl ? 40 : -40;
+      if (direction === 'scale') from.scale = 1.06;
 
-    const context = gsap.context(() => {
       gsap.fromTo(targets, from, {
         opacity: 1,
         x: 0,
@@ -66,20 +66,11 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>({
         delay,
         stagger,
         ease: 'power3.out',
-        scrollTrigger: {
-          trigger: element,
-          start,
-          once,
-          onEnter: () => {
-            element.setAttribute('data-revealed', 'true');
-            targets.forEach((t) => t.setAttribute('data-revealed', 'true'));
-          },
-        },
+        scrollTrigger: { trigger: element, start, once, onEnter: markRevealed },
       });
-    }, element);
-
-    return () => context.revert();
-  }, [direction, delay, duration, stagger, start, once]);
+    },
+    { scope: ref, dependencies: [direction, delay, duration, stagger, start, once] },
+  );
 
   return ref;
 }

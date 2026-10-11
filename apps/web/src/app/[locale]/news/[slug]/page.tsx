@@ -65,9 +65,9 @@ export default async function ArticlePage({ params }: Props) {
       />
 
       <Section tone="canvas">
-        {/* Body HTML is sanitised server-side in Laravel before it is stored;
-            see `App\Services\HtmlSanitizer`. Never render CMS HTML that has not
-            been through it. */}
+        {/* The CMS stores plain text, and `renderMarkup` writes every tag in
+            this HTML itself after escaping the input — see
+            `src/server/markup.ts`. Nothing an editor types becomes markup. */}
         <article
           className="prose-vitaqueen max-w-2xl"
           dangerouslySetInnerHTML={{ __html: article.body }}

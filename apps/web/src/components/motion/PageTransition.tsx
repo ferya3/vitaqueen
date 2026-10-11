@@ -1,27 +1,38 @@
 'use client';
 
-import { AnimatePresence, motion } from 'motion/react';
+import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { pageVariants } from '@/animations/page-transition/variants';
 
 /**
- * Fades page bodies across route changes.
- * Kept to opacity and a small translate so it never delays the LCP element.
+ * Set after the first page has mounted. The first render is the server's HTML
+ * and must appear at once — fading in the LCP element costs real seconds and
+ * hides the page from anyone without JavaScript — so only client-side
+ * navigations after that animate.
+ */
+let hasNavigated = false;
+
+/**
+ * Fades page bodies in across route changes, with Framer Motion.
+ *
+ * Wraps the page inside the locale layout and is keyed by the path, so each
+ * navigation mounts a fresh wrapper. (Not a `template.tsx`: Next loads that
+ * file's chunk without the CSP nonce, and `strict-dynamic` then refuses it.)
+ * Opacity only: a transform here would become the containing block for GSAP's
+ * pinned sections and break them.
  */
 export function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const animateIn = hasNavigated;
+
+  useEffect(() => {
+    hasNavigated = true;
+  }, []);
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={pathname}
-        variants={pageVariants}
-        initial="initial"
-        animate="enter"
-        exit="exit"
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <motion.div key={pathname} variants={pageVariants} initial={animateIn ? 'initial' : false} animate="enter">
+      {children}
+    </motion.div>
   );
 }

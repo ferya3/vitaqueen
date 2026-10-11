@@ -4,36 +4,20 @@ import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { Plus_Jakarta_Sans, Vazirmatn } from 'next/font/google';
-
+// Self-hosted from npm (Fontsource), not fetched from Google at build time:
+// the build must not depend on reaching fonts.googleapis.com, which is slow or
+// unreachable from many of the networks this site is deployed and read on.
+import '@fontsource-variable/vazirmatn';
+import '@fontsource-variable/plus-jakarta-sans';
 import '../globals.css';
 
 import { routing, getDirection, localeTags, type Locale } from '@/i18n/routing';
 import { siteConfig } from '@/config/site';
 import { MotionProvider } from '@/components/motion/MotionProvider';
+import { PageTransition } from '@/components/motion/PageTransition';
 import { Header } from '@/components/navigation/Header';
 import { Footer } from '@/components/navigation/Footer';
 import { organizationSchema, websiteSchema } from '@/lib/schema';
-
-/**
- * Latin display + text face. Plus Jakarta Sans carries the geometric, slightly
- * rounded shapes the glass surfaces need; it is variable, so one file covers
- * the whole weight scale.
- */
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  variable: '--font-latin',
-  display: 'swap',
-  weight: ['400', '500', '600', '700', '800'],
-});
-
-/** Persian and Arabic face. Vazirmatn has proper Persian digits and kashida. */
-const vazirmatn = Vazirmatn({
-  subsets: ['arabic', 'latin'],
-  variable: '--font-arabic',
-  display: 'swap',
-  weight: ['300', '400', '500', '600', '700'],
-});
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -103,7 +87,6 @@ export default async function LocaleLayout({
     <html
       lang={localeTags[locale as Locale]}
       dir={direction}
-      className={`${jakarta.variable} ${vazirmatn.variable}`}
       style={
         {
           // Bind the design system's font tokens to the right face for this
@@ -129,7 +112,9 @@ export default async function LocaleLayout({
         <NextIntlClientProvider>
           <MotionProvider>
             <Header />
-            <main id="main">{children}</main>
+            <main id="main">
+              <PageTransition>{children}</PageTransition>
+            </main>
             <Footer />
           </MotionProvider>
         </NextIntlClientProvider>

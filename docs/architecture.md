@@ -8,184 +8,190 @@
                         CLOUDFLARE
                     DNS · WAF · DDoS · Bot · Cache · Turnstile
                              │
-                           NGINX                    (origin, Cloudflare IPs only)
-              ┌──────────────┴──────────────┐
-              │                             │
-        vitaqueen.com                 api.vitaqueen.com
-              │                             │
-          NEXT.JS 16                    LARAVEL 13
-      SSR · ISR · proxy.ts              PHP 8.4 · FPM
-              │                             │
-              │   server-to-server     ┌────┼────┬─────────┐
-              └───────────────────────▶│    │    │         │
-                                     MYSQL REDIS  STORAGE (private disk)
+                           NGINX                 (origin, Cloudflare IPs only)
+                             │
+                   NEXT.JS 16 under pm2          127.0.0.1:3000
+        ┌────────────────────┼─────────────────────┐
+   public site          admin panel            /uploads
+  /fa /en /ar /ru     /admin (Persian)      media route
+        │                    │                     │
+        └──────── src/server (server-only) ────────┘
+                             │
+              node:sqlite  ·  sharp  ·  node:crypto
+                             │
+               DATA_DIR/vitaqueen.db  ·  DATA_DIR/uploads
 ```
 
-The browser talks to Next.js and nothing else. Every call to Laravel is made
-server-side, which is why the API origin is not a `NEXT_PUBLIC_` variable and
-why `connect-src` in the CSP is just `'self'`.
+One process, one language. The public site, the CMS behind it and the media
+server are the same Next.js application. The database is a file read through
+Node's built-in `node:sqlite`, so there is no database server to install,
+secure, back up separately or keep running.
+
+The browser talks to that one origin and nothing else: data is read on the
+server and every form posts to a Server Action, which is why `connect-src` in
+the CSP is just `'self'`.
+
+## The stack
+
+| Concern | Choice |
+| --- | --- |
+| Language and runtime | TypeScript 5.9 on Node.js 22 (22.13+ for unflagged `node:sqlite`) |
+| Framework | Next.js 16, App Router, React 19 |
+| Styling | Tailwind CSS 4, tokens in `src/app/globals.css` |
+| UI primitives | shadcn/ui style: `class-variance-authority`, `clsx`, `tailwind-merge`, `@radix-ui/react-slot` |
+| Icons | `lucide-react` |
+| Fonts | Vazirmatn and Plus Jakarta Sans, self-hosted via Fontsource |
+| Motion | Framer Motion (page transitions, counters, tilt cards, menu), GSAP + ScrollTrigger through `@gsap/react` (pinned sequences, reveals, hero), Lenis (smooth scroll) |
+| 3D | Three.js, React Three Fiber, Drei |
+| Client state | Zustand (mobile menu) |
+| Database | `node:sqlite`, WAL mode, plain SQL migrations |
+| Images | `sharp`: every upload re-encoded to WebP |
+| Passwords, sessions, 2FA, encryption | `node:crypto`: scrypt, random session tokens, TOTP, AES-256-GCM |
+| Forms | Server Actions, validated on the server (zod for the public form) |
+| Process manager | pm2 |
+| Checks | `tsc --noEmit`, ESLint (zero warnings) |
 
 ## Five layers
 
-The project is organised as the five layers the brief called for, and each one
-has a real home in the tree rather than being an idea in a document.
-
 | Layer | Where it lives |
 | --- | --- |
-| **1 · Brand** | `apps/web/src/app/globals.css` (`@theme`), `config/site.ts`, `components/ui/Logo.tsx` |
-| **2 · Experience** | `apps/web/src/animations/**`, `components/motion/**`, `components/three/**` |
-| **3 · Content** | `apps/api/app/Models/**`, `apps/web/src/services/content.ts`, `src/content/seed.ts` |
-| **4 · Technology** | `apps/web`, `apps/api`, `infra/docker` |
-| **5 · Security** | `apps/web/src/proxy.ts`, `apps/api/app/Http/Middleware/**`, `app/Policies/**`, `infra/nginx` |
+| **1 · Brand** | `src/app/globals.css` (`@theme`), `config/site.ts`, `components/ui/Logo.tsx` |
+| **2 · Experience** | `src/animations/**`, `components/motion/**`, `components/three/**` |
+| **3 · Content** | `db/migrations`, `src/server/**`, `src/services/content.ts`, `src/app/admin/**` |
+| **4 · Technology** | `apps/web`, `ecosystem.config.cjs`, `infra/scripts` |
+| **5 · Security** | `src/proxy.ts`, `src/server/auth.ts`, `src/lib/roles.ts`, `src/server/media.ts`, `infra/nginx` |
 
-## Front end
-
-### Routing and locale
-
-`src/proxy.ts` (Next 16's replacement for `middleware.ts`) does two jobs in one
-pass: it negotiates the locale and it builds the CSP.
-
-Locale negotiation is hand-written rather than delegated to `next-intl`'s
-middleware, and that is a deliberate trade. Owning the response means the
-request headers can be rewritten before they reach the app, which is the only
-way Next.js can pick up a per-request CSP nonce for its own inline bootstrap
-script. Handing that off would have meant `script-src 'unsafe-inline'`.
-
-`next-intl` still does everything else — message catalogues, `getTranslations`,
-locale-aware `Link` and `useRouter`.
-
-### Rendering
-
-Pages render on demand rather than statically, because reading the nonce header
-opts the segment into dynamic rendering. The trade is deliberate:
-
-- **Cost:** no pre-rendered HTML at build time.
-- **Benefit:** a strict CSP with no `unsafe-inline`, and content that is never
-  stale by a deploy.
-- **Mitigation:** data fetches are cached by tag with a 5-minute revalidate, the
-  API sets `s-maxage=300, stale-while-revalidate=600`, and Cloudflare caches the
-  HTML at the edge. The origin does far less work than "dynamic" suggests.
-
-### Content services and the seed fallback
-
-Every page reads through `src/services/content.ts`, which returns
-`{ data, seeded }`. If the API is unreachable, the loader falls back to
-`src/content/seed.ts` and `seeded` is `true`.
-
-This is not a convenience hack. It has two rules:
-
-1. **The site must build and deploy before the CMS exists.** A marketing site
-   that cannot render until someone has provisioned MySQL is a site that misses
-   its launch date.
-2. **Sample data must never look authoritative.** Wherever seeded figures reach
-   the screen — mineral values, the analysis table — the page renders a
-   `SeedNotice` in the visitor's language. Certificates have no fallback at all.
-
-Set `REQUIRE_API=true` in production once the CMS is live and the fallback
-becomes a hard failure instead, so a broken API is loud rather than silent.
-
-### Directory layout
+## Directory layout
 
 ```
-src/
-├── app/[locale]/          route tree, one directory per page
-├── animations/            GSAP timelines and scroll hooks, no JSX
-│   ├── hero/  scroll/  micro-interactions/  page-transition/
-│   ├── gsap.ts            single plugin registration point
-│   ├── lenis.ts           smooth-scroll singleton
-│   └── splitting.ts       script-aware text splitting
-├── components/
-│   ├── motion/            declarative wrappers over the animation hooks
-│   ├── ui/                primitives (Button, Section, DataTable, …)
-│   ├── three/             the one WebGL scene, lazy and client-only
-│   └── hero/ home/ source/ products/ factory/ quality/ contact/ navigation/
-├── config/                site constants, navigation tree, server-only config
-├── content/               seeded fallback content
-├── hooks/                 browser-state hooks (media query, device tier, pointer)
-├── i18n/                  routing, request config, locale-aware navigation
-├── lib/                   cn, formatting, SEO, schema.org
-├── services/              API client and content loaders (server-only)
-└── types/                 the contract with the API
+apps/web/
+├── db/
+│   ├── migrations/        0001_init.sql … — the schema, in plain SQL
+│   └── core.mjs           open, migrate, scrypt — shared by the app and the CLI
+├── scripts/db.mjs         migrate · create-admin · reset-password · reset-2fa · prune · backup
+├── ecosystem.config.cjs   pm2
+└── src/
+    ├── app/
+    │   ├── [locale]/      the public site, one directory per page
+    │   ├── admin/         the CMS: login, 2FA, and (panel)/ behind requireAdmin
+    │   └── uploads/       serves DATA_DIR/uploads
+    ├── animations/        GSAP timelines and scroll hooks (useGSAP), no JSX
+    ├── components/
+    │   ├── admin/         panel UI: AdminForm, fields, forms/ per resource
+    │   ├── motion/        Reveal, TextReveal, TiltCard, PageTransition …
+    │   ├── ui/            primitives: Button (cva + Slot), Card, Field, Icons …
+    │   └── three/ hero/ home/ products/ factory/ quality/ contact/ navigation/
+    ├── content/samples.ts the sample catalogue written into a fresh database
+    ├── server/            server-only: db, auth, totp, secrets, media, audit,
+    │   │                  rate limits, markup renderer, seed
+    │   └── actions/       'use server' modules — every export is an endpoint
+    ├── services/content.ts what the public pages read
+    ├── stores/            Zustand
+    └── i18n/ lib/ hooks/ config/ types/
 ```
 
 Animation code contains no JSX and components contain no GSAP. A component asks
-for `<Reveal>` or `useHeroTimeline()`; it never writes a timeline inline. That
-is what stops the project turning into three hundred lines of `gsap.to` per
-page.
+for `<Reveal>` or `useHeroTimeline()`; it never writes a timeline inline.
 
-## Back end
+## Data
 
-### Request path
+### Schema and migrations
 
-```
-Route  →  FormRequest (validate)  →  Policy (authorise)  →  Service  →  Model
-                                                              │
-                                                          Resource (shape)
-```
+`db/migrations/NNNN_name.sql` files are applied in order by `migrate()` in
+`db/core.mjs`, inside a single `BEGIN IMMEDIATE` transaction. The lock matters:
+`next build` renders with several workers, each of which opens the database,
+and without it two of them would both try to create version 1.
 
-Controllers do not contain business logic and do not contain authorisation
-logic. `ProductController` is the reference: eight lines per action.
+The application migrates on first use; `npm run db:migrate` does the same from
+the command line, and the installer runs it before every build.
 
 ### Translations
 
-Translatable columns are JSON: `{"fa": "…", "en": "…"}`, read through the
-`HasTranslations` trait.
+Translatable columns hold JSON: `{"fa": "…", "en": "…", "ar": "…", "ru": "…"}`.
+A per-model translation table would double every query for flexibility this
+site does not need — four fixed locales, none with fields of its own.
+`pick()` in `src/server/translations.ts` resolves the requested locale, then
+English (what export markets read), then Persian, then anything present, so a
+half-translated record renders instead of a blank.
 
-The alternative — a `*_translations` table per model — doubles the query count
-on every list endpoint and buys flexibility this project does not need: the
-locale set is fixed at four and no locale has extra fields. A missing
-translation falls back to the fallback locale, then to any populated value, so a
-half-translated record renders instead of showing a blank page.
+### Sample content, and saying so
 
-### Caching
+A new database is seeded once (`src/server/seed.ts`, marker in `meta`) with the
+five bottle formats, a typical mineral analysis, the source profile, the eight
+production stages and three unpublished legal-page drafts. Two rules:
 
-There is no application-level cache of Eloquent models, on purpose. Public reads
-are cached at the HTTP layer by `PublicCacheHeaders`, which Cloudflare and the
-Next.js data cache both honour. That cache is shared across processes, expires
-on a clock rather than on someone remembering to call `Cache::forget()` in the
-right place, and cannot break on a deploy the way a serialised model can.
+1. **Nothing that would be a false claim.** No certificates, news or
+   distributors are seeded. Legal pages are drafts until a person writes them.
+2. **Sample figures are labelled.** The analysis and source profile carry
+   `is_sample = 1`, and every page that shows them renders a notice in the
+   visitor's language until an editor saves real laboratory figures and clears
+   the flag. The admin dashboard nags about it too.
 
-Redis still backs sessions, queues and the framework cache.
+### Rendering and freshness
 
-### Audit log
+The locale layout reads the CSP nonce header, which makes every page dynamic:
+each request renders from the database. `node:sqlite` is synchronous and
+in-process, so a page's queries cost microseconds, and an admin save is visible
+on the next request with no cache to invalidate. Server Actions still call
+`revalidatePath('/', 'layout')`, so that stays true if any route becomes static
+later. Cloudflare can cache the HTML at the edge.
 
-`Auditable` writes a row for every create, update and delete. Two properties
-make it worth having:
+### Rich text
 
-- It records the **diff**, not the whole row, so a reviewer can see what changed
-  without reading two JSON blobs.
-- Secrets are excluded by name — password hashes and 2FA secrets must not be
-  recoverable from a table that more people can read than `users`.
+News bodies and legal pages are stored as the editor typed them, in a small
+markup (`## heading`, `- list`, `**bold**`, `[link](https://…)`).
+`renderMarkup()` escapes everything first and then writes every tag itself, so
+there is no sanitiser to get wrong and no stored HTML for a future consumer to
+forget to clean.
 
-There is no update or delete endpoint for it. Retention is enforced by
-`vitaqueen:prune`, scheduled daily.
+## Admin panel
+
+`/admin`, Persian and right-to-left, outside the locale tree with its own
+document layout.
+
+- **Every page and every action calls `requireAdmin(minRole)`.** Server Actions
+  are public HTTP endpoints whichever page renders the form; hiding a button is
+  not access control. The `'use server'` modules export nothing else — helpers
+  that take a user id live in plain server-only modules.
+- **Forms** are `AdminForm`: a Server Action through `useActionState`, submitted
+  from `onSubmit` rather than `<form action>`, because React resets a form after
+  an action passed that way — which would discard the editor's input and chosen
+  files on a validation error.
+- **Uploads** travel in the same multipart request as the text fields; the body
+  limit is 40 MB (`next.config.ts`), per-file limits are in `src/server/media.ts`.
+- **Roles** (`src/lib/roles.ts`): content manager → editor → admin → super admin.
+  Content managers write but cannot publish or delete; editors publish, delete
+  and read enquiries; admins manage users and read the audit log.
+
+Resources: products (with images, datasheet, certificates), certificates, water
+analyses, source profile, production stages, news, legal pages, distributors,
+media library, enquiries, users, audit log, own account.
 
 ## What is deliberately not here
 
-Being explicit about the gaps is more useful than implying they do not exist.
-
 | Not built | Why, and what to do |
 | --- | --- |
-| **Admin UI** | The admin *API* is complete and tested; the panel that consumes it is a separate front end. Build it against `docs/api.md`, or drive it with an admin toolkit — nothing in the API assumes a particular client. |
-| **Certificates** | No seed, no fallback. Enter only documents the factory holds. A certificate invented to fill a grid is a compliance problem with a delay fuse. |
-| **Real analysis figures** | The seeded analysis is unpublished and labelled as sample data everywhere it surfaces. |
-| **Photography and video** | `WaterBackdrop` generates the art; `MediaLayer` swaps in real assets as soon as they exist. Stock photography of a generic mountain would be worse than no photograph. |
-| **Cloudflare configuration** | WAF rules, Turnstile keys, bot rules and cache rules are account settings, not repository files. `docs/security.md` lists what to enable. |
-| **Monitoring** | Sentry, uptime and log shipping are wired for by config (`SENTRY_LARAVEL_DSN`) but not provisioned here. |
-| **CI deploy step** | The workflow builds and tests. The deploy target is infrastructure-specific; the runner should be outside the production host. |
+| **Email notifications** | Enquiries land in the admin inbox with an unread count. Sending mail needs an SMTP account and a mail library; add one when there is a mailbox to send to. |
+| **Certificates** | No seed. Enter only documents the factory holds; expired ones drop off the site automatically. |
+| **Photography and video** | `WaterBackdrop` generates the art; product images and stage media come from the admin panel. |
+| **Cloudflare configuration** | Account settings, not repository files. `docs/security.md` lists what to enable. |
+| **Off-site backups** | `npm run db:backup` makes a consistent copy; shipping it and `DATA_DIR/uploads` off the machine is a cron job for the operator. |
 
 ## Decisions worth remembering
 
-- **Next.js + Laravel over Blade.** The visual layer needs a client-side motion
-  system; the content layer needs a mature admin, validation and policy stack.
-  Neither half compromises for the other.
-- **Own the middleware to own the CSP.** Discussed above; this is the single
-  most consequential structural decision in the front end.
-- **Locale prefix always on.** `/fa`, `/en`, `/ar`, `/ru` — no bare paths. Export
-  markets get stable, cacheable URLs and `hreflang` stays trivial to generate.
-- **The device tier is measured, not guessed from the user agent.** Memory,
-  cores, pointer type, WebGL support and Save-Data, resolved once per load and
-  published on `<html data-tier>` so CSS can act on it without a React render.
-- **Sanitise HTML on write.** Storing raw editor output and cleaning on read
-  means every future consumer — a feed, an export, an app — must remember to
-  clean it too. One of them will not.
+- **One Node application instead of Next.js + Laravel.** One language, one
+  process, one deploy, and an admin UI that did not exist before. The cost is
+  that the CMS shares a process with the public site; for a factory website's
+  traffic, that is the right trade.
+- **SQLite in-process.** No database server to run or expose. WAL keeps reads
+  flowing during writes; the single pm2 process avoids writer contention
+  entirely.
+- **Own the proxy to own the CSP.** `src/proxy.ts` negotiates the locale and
+  sets a per-request nonce, which is what keeps `script-src` free of
+  `unsafe-inline`.
+- **Locale prefix always on.** `/fa`, `/en`, `/ar`, `/ru`; `hreflang` stays
+  trivial.
+- **The device tier is measured, not guessed.** Memory, cores, pointer, WebGL
+  and Save-Data, published on `<html data-tier>` for CSS.
+- **Fonts from npm, not Google.** The build must not depend on reaching
+  fonts.googleapis.com.

@@ -4,6 +4,10 @@ import { locales, localeTags, defaultLocale } from '@/i18n/routing';
 import { staticRoutes } from '@/config/navigation';
 import { getNews, getProducts } from '@/services/content';
 
+// Read from the database on request, so a product or article published in the
+// admin panel is in the sitemap without a rebuild.
+export const dynamic = 'force-dynamic';
+
 const url = (path: string) => new URL(path, siteConfig.url).toString();
 
 /**

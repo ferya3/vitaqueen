@@ -53,8 +53,9 @@
   --color-hairline: rgb(15 42 58 / 0.08);
 
   /* --- Typography --------------------------------------------------------
-     Bound in the root layout: Plus Jakarta Sans for Latin and Cyrillic,
-     Vazirmatn for Persian and Arabic.                                       */
+     Both faces are variable fonts self-hosted through Fontsource. The locale
+     layout binds --font-brand-* to one of them: Plus Jakarta Sans for Latin
+     and Cyrillic, Vazirmatn for Persian and Arabic (see :root below).       */
   --font-display: var(--font-brand-display), "Plus Jakarta Sans", system-ui, sans-serif;
   --font-sans: var(--font-brand-sans), "Plus Jakarta Sans", system-ui, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", "Menlo", monospace;
@@ -106,6 +107,13 @@
 /* ==========================================================================
    Base
    ========================================================================== */
+
+/* Declared outside @theme because they are only ever referenced from the
+   layout's inline style, and @theme drops variables no utility uses. */
+:root {
+  --font-latin: "Plus Jakarta Sans Variable";
+  --font-arabic: "Vazirmatn Variable";
+}
 
 @layer base {
   *,

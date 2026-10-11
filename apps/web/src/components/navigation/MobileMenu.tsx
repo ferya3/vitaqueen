@@ -1,16 +1,19 @@
 'use client';
 
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { primaryNavigation } from '@/config/navigation';
 import { menuItemVariants, menuVariants } from '@/animations/page-transition/variants';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { CloseIcon, ArrowIcon } from '@/components/ui/Icons';
+import { useMenuStore } from '@/stores/ui';
 import { LocaleSwitcher } from './LocaleSwitcher';
 
-export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function MobileMenu() {
   const t = useTranslations('nav');
+  const open = useMenuStore((state) => state.menuOpen);
+  const onClose = useMenuStore((state) => state.closeMenu);
   useScrollLock(open);
 
   return (

@@ -15,11 +15,15 @@ permissions:
 
 jobs:
   web:
-    name: Front end
+    name: Site and admin
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: apps/web
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      DATA_DIR: ${{ runner.temp }}/vitaqueen-data
+      APP_SECRET: ci-only-not-a-real-secret
     steps:
       - uses: actions/checkout@v4
 
@@ -37,40 +41,15 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      # Builds with no API reachable, which is the point: the site must build
-      # from seeded content alone.
+      # The same commands the installer runs on a server, against a fresh
+      # database: migrations apply, an admin can be created, and a second
+      # --if-none run is a no-op.
+      - name: Database CLI
+        run: |
+          npm run db:migrate
+          npm run db:admin -- --email ci@example.com --password 'ci-password-0123'
+          npm run db:admin -- --if-none --email other@example.com | grep -q 'already exist'
+          npm run db:backup -- --to "$RUNNER_TEMP/backup.db"
+
       - name: Build
         run: npm run build
-        env:
-          NEXT_TELEMETRY_DISABLED: '1'
-
-  api:
-    name: API
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/api
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          extensions: mbstring, intl, pdo_sqlite, bcmath, gd, redis
-          coverage: none
-
-      - name: Cache Composer
-        uses: actions/cache@v4
-        with:
-          path: ~/.composer/cache
-          key: composer-${{ hashFiles('apps/api/composer.lock') }}
-
-      - run: composer install --prefer-dist --no-interaction --no-progress
-
-      - name: Code style
-        run: ./vendor/bin/pint --test
-
-      - name: Tests
-        run: php artisan test
-        env:
-          APP_ENV: testing

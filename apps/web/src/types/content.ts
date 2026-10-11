@@ -1,8 +1,9 @@
 /**
- * The contract between the Laravel CMS and the Next.js front end.
+ * What the public pages render.
  *
- * These types mirror `App\Http\Resources\*` in `apps/api`. When a resource
- * changes shape on the backend, change it here in the same commit.
+ * `src/services/content.ts` maps database rows (see `db/migrations`) into
+ * these shapes, resolving translations for the requested locale on the way.
+ * Pages never see a raw row.
  */
 
 export type LocalisedText = Record<string, string>;

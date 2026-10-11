@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef } from 'react';
+import { useGSAP } from '@gsap/react';
 import { gsap } from '@/animations/gsap';
-import { useIsomorphicLayoutEffect } from '@/hooks/useIsomorphicLayoutEffect';
 
 type Options = {
   /** Travel as a fraction of the element's height. 0.2 ≈ a restrained drift. */
@@ -20,16 +20,15 @@ export function useParallax<T extends HTMLElement = HTMLDivElement>({
 }: Options = {}) {
   const ref = useRef<T>(null);
 
-  useIsomorphicLayoutEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    // Parallax on a phone costs more than it communicates.
-    if (window.matchMedia('(pointer: coarse)').matches) return;
+  useGSAP(
+    () => {
+      const element = ref.current;
+      if (!element) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      // Parallax on a phone costs more than it communicates.
+      if (window.matchMedia('(pointer: coarse)').matches) return;
 
-    const context = gsap.context(() => {
-      const distance = () =>
-        (axis === 'y' ? element.offsetHeight : element.offsetWidth) * amount;
+      const distance = () => (axis === 'y' ? element.offsetHeight : element.offsetWidth) * amount;
 
       gsap.fromTo(
         element,
@@ -46,10 +45,9 @@ export function useParallax<T extends HTMLElement = HTMLDivElement>({
           },
         },
       );
-    }, element);
-
-    return () => context.revert();
-  }, [amount, axis, scrub]);
+    },
+    { scope: ref, dependencies: [amount, axis, scrub] },
+  );
 
   return ref;
 }

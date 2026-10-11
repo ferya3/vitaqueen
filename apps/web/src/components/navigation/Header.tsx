@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
 import { primaryNavigation } from '@/config/navigation';
@@ -8,6 +8,7 @@ import { Logo } from '@/components/ui/Logo';
 import { ScrollProgress } from '@/components/motion/ScrollProgress';
 import { ChevronIcon } from '@/components/ui/Icons';
 import { cn } from '@/lib/cn';
+import { useMenuStore } from '@/stores/ui';
 import { siteConfig } from '@/config/site';
 import { LocaleSwitcher } from './LocaleSwitcher';
 import { MobileMenu } from './MobileMenu';
@@ -39,16 +40,19 @@ export function Header() {
   const t = useTranslations('nav');
   const pathname = usePathname();
   const scrolled = useScrolledPast(24);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const openMenu = useMenuStore((state) => state.openMenu);
+  const closeMenu = useMenuStore((state) => state.closeMenu);
   const [openKey, setOpenKey] = useState<string | null>(null);
 
-  // Close the menu and any open dropdown when the route changes. Adjusting
-  // state during render (rather than in an effect) avoids the extra commit
-  // where the old menu is still on screen over the new page.
+  // Close any open dropdown when the route changes. Adjusting local state
+  // during render (rather than in an effect) avoids the extra commit where the
+  // old dropdown is still on screen over the new page.
+  // The menu lives in a shared store, which must not be written during render.
+  useEffect(() => closeMenu(), [pathname, closeMenu]);
+
   const [lastPathname, setLastPathname] = useState(pathname);
   if (lastPathname !== pathname) {
     setLastPathname(pathname);
-    setMenuOpen(false);
     setOpenKey(null);
   }
 
@@ -120,7 +124,7 @@ export function Header() {
               <LocaleSwitcher label={t('language')} />
               <button
                 type="button"
-                onClick={() => setMenuOpen(true)}
+                onClick={openMenu}
                 className={cn(
                   'inline-flex items-center gap-2 rounded-pill px-4 py-2 text-sm font-medium text-heading transition-colors xl:hidden',
                   scrolled ? 'bg-ink-900/6 hover:bg-ink-900/10' : 'glass',
@@ -140,7 +144,7 @@ export function Header() {
         </div>
       </header>
 
-      <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <MobileMenu />
     </>
   );
 }

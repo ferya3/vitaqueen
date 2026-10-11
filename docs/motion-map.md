@@ -9,7 +9,9 @@ cannot afford it.
    until `MotionProvider` puts `js-motion` on `<html>`. A failed chunk load
    degrades to "the page is simply visible", never to a blank screen.
 2. **Motion code contains no JSX; components contain no timelines.** Hooks live
-   in `src/animations`, wrappers in `src/components/motion`.
+   in `src/animations`, wrappers in `src/components/motion`. Every GSAP hook runs
+   inside `useGSAP` from `@gsap/react`, which scopes selectors to the component
+   and reverts its tweens and ScrollTriggers on unmount.
 3. **One scroll loop.** Lenis is driven from GSAP's ticker, so smooth scroll and
    every ScrollTrigger share a single `requestAnimationFrame`.
 4. **`prefers-reduced-motion` is honoured at the top of every hook**, not
@@ -59,20 +61,21 @@ the old trigger the copy began fading the instant the page loaded.
 
 | Page | Mechanism |
 | --- | --- |
-| All | `PageHero` line reveal; `PageTransition` fades the body across routes (opacity + 12 px, 450 ms) |
+| All | `PageHero` line reveal; `PageTransition` (Framer Motion) fades the body in on client navigations — opacity only, 450 ms, never on the first load |
 | Factory | `ProcessSequence` — the eight production stages in one pinned ink slab, 0.55 viewports of scroll per stage, plus per-stage metrics from the CMS. Never pins on a coarse pointer |
 | Source | Animated SVG route diagram: dashed stroke offset for flow, pulsing spring marker |
 | Quality | Reveals only. This page is read, not watched — the numbers are the point |
-| Products | Card lift on hover, staggered grid reveal |
+| Products | `TiltCard` (Framer Motion springs) tilts each card toward the cursor with a moving glare; staggered grid reveal. Mouse only, off under reduced motion |
 
 ### Micro-interactions
 
 | Effect | Where | Notes |
 | --- | --- | --- |
-| Magnetic buttons | Every `Button` / `ButtonLink` | `gsap.quickTo`, precise pointers only |
-| Sheen | Button hover | Pure CSS, hidden under `motion-reduce` |
-| Count-up | `Stat` | Final value is server-rendered, so a crawler and a no-JS visitor see the real number |
+| Magnetic buttons | `ButtonLink`, and `Button` with `magnetic` | `gsap.quickTo` inside `useGSAP`, precise pointers only |
+| Sheen | Button hover (`sheen` variant) | A `::before` pseudo-element, so it survives `asChild`; hidden under `motion-reduce` |
+| Count-up | `Stat` | Framer Motion `animate` once `useInView` fires. Final value is server-rendered, so a crawler and a no-JS visitor see the real number |
 | Scroll progress | Header hairline | Written straight to the DOM on scroll; never re-renders React |
+| Mobile menu | Opened from the header, closed from the menu or by navigation | Zustand store; Framer Motion `AnimatePresence` with staggered items |
 | Header state | The floating pill gains its glass material and contracts past 24 px | `useSyncExternalStore`, re-renders only when the boolean flips |
 
 ## The WebGL scene
