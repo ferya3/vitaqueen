@@ -74,6 +74,11 @@ else
   command -v sudo >/dev/null || die "sudo is required when not running as root."
   SUDO=(sudo)
   SUDO_E=(sudo -E)
+  if ! sudo -n true 2>/dev/null; then
+    warn "sudo is asking for $(id -un)'s password. If this account has no password,
+    press Ctrl+C and, as root, run:
+      echo '$(id -un) ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/$(id -un) && chmod 440 /etc/sudoers.d/$(id -un)"
+  fi
   sudo -v || die "sudo authentication failed."
   # Keep the sudo timestamp alive for the length of the run.
   while true; do sudo -n true; sleep 50; kill -0 "$$" 2>/dev/null || exit; done 2>/dev/null &
@@ -81,7 +86,7 @@ else
   trap 'kill "$SUDO_KEEPALIVE" 2>/dev/null || true' EXIT
 fi
 
-export DEBIAN_FRONTEND=noninteractive
+export DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a
 # Bounded timeouts, and IPv4 with no pipelining: the standard remedy for
 # mirrors that stall on hosts with a broken IPv6 route or an unhappy proxy.
 APT_OPTS=(
@@ -91,6 +96,14 @@ APT_OPTS=(
   -o "Acquire::ForceIPv4=true"
   -o "Acquire::http::Pipeline-Depth=0"
 )
+
+# `sudo` resets the environment, so DEBIAN_FRONTEND set above would never reach
+# apt-get. Passing it explicitly — with NEEDRESTART_MODE, because Ubuntu 24.04's
+# needrestart otherwise opens a "restart which services?" dialog mid-install,
+# which swallows whatever was pasted after this script.
+apt_get() {
+  "${SUDO[@]}" env DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt-get "${APT_OPTS[@]}" "$@"
+}
 
 # --- Memory -----------------------------------------------------------------
 
@@ -144,9 +157,9 @@ ensure_swap
 # --- System packages --------------------------------------------------------
 
 step "Base packages"
-"${SUDO[@]}" apt-get "${APT_OPTS[@]}" update -qq
+apt_get update -qq
 # sqlite3 is only the command-line client, for looking at the database by hand.
-"${SUDO[@]}" apt-get "${APT_OPTS[@]}" install -y -qq ca-certificates curl git gnupg openssl sqlite3
+apt_get install -y -qq ca-certificates curl git gnupg openssl sqlite3
 
 node_ok() {
   command -v node >/dev/null || return 1
@@ -159,7 +172,7 @@ node_ok() {
 step "Node.js ${NODE_MAJOR}"
 if ! node_ok; then
   curl -fsSL --retry 3 "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | "${SUDO_E[@]}" bash - >/dev/null
-  "${SUDO[@]}" apt-get "${APT_OPTS[@]}" install -y -qq nodejs
+  apt_get install -y -qq nodejs
 fi
 node_ok || die "Node.js ${NODE_MAJOR}.${NODE_MIN_MINOR}+ is required; found $(node -v 2>/dev/null || echo none)."
 info "node $(node -v), npm $(npm -v)"
@@ -283,7 +296,7 @@ info "Answering on http://127.0.0.1:3000"
 
 if [[ "$WITH_NGINX" == "1" ]]; then
   step "nginx"
-  "${SUDO[@]}" apt-get "${APT_OPTS[@]}" install -y -qq nginx
+  apt_get install -y -qq nginx
   "${SUDO[@]}" install -m 644 "$INSTALL_DIR/infra/nginx/vitaqueen-http.conf" /etc/nginx/sites-available/vitaqueen
   "${SUDO[@]}" ln -sfn /etc/nginx/sites-available/vitaqueen /etc/nginx/sites-enabled/vitaqueen
   "${SUDO[@]}" rm -f /etc/nginx/sites-enabled/default

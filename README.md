@@ -54,12 +54,16 @@ A fresh VPS gives you a root shell, and the installer refuses to run as root.
 As root, create a user and switch to it:
 
 ```bash
-apt update && apt install -y git
+NEEDRESTART_MODE=a apt update && NEEDRESTART_MODE=a apt install -y git sudo
 adduser --disabled-password --gecos '' vitaqueen
 usermod -aG sudo vitaqueen
-install -m 440 /dev/stdin /etc/sudoers.d/vitaqueen <<< 'vitaqueen ALL=(ALL) NOPASSWD:ALL'
+echo 'vitaqueen ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/vitaqueen && chmod 440 /etc/sudoers.d/vitaqueen
+sudo -iu vitaqueen sudo -n true && echo "sudo OK"
 sudo -iu vitaqueen
 ```
+
+Run these one at a time rather than pasting the block: if anything stops to
+ask a question, the lines pasted after it are read as the answer.
 
 As `vitaqueen`:
 
