@@ -139,7 +139,14 @@ function Droplets({ count = 140 }: { count?: number }) {
   );
 }
 
-export default function BottleScene({ className }: { className?: string }) {
+export default function BottleScene({
+  className,
+  bottle = true,
+}: {
+  className?: string;
+  /** Off: only the drifting droplets, as an ambient layer behind other art. */
+  bottle?: boolean;
+}) {
   return (
     <Canvas
       className={className}
@@ -154,8 +161,8 @@ export default function BottleScene({ className }: { className?: string }) {
       <ambientLight intensity={0.9} />
       <directionalLight position={[3, 5, 4]} intensity={2.1} color="#ffffff" />
       <directionalLight position={[-4, -1, -3]} intensity={1.1} color="#5cc8ef" />
-      <BottleMesh position={[0, -0.05, 0]} scale={1.05} />
-      <Droplets />
+      {bottle ? <BottleMesh position={[0, -0.05, 0]} scale={1.05} /> : null}
+      <Droplets count={bottle ? 140 : 220} />
     </Canvas>
   );
 }

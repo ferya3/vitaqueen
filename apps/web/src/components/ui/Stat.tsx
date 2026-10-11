@@ -17,17 +17,23 @@ export function Stat({
   suffix,
   className,
   tone = 'default',
+  size = 'md',
+  decimals = 0,
 }: {
   value: number;
   label: string;
   suffix?: string;
   className?: string;
   tone?: 'default' | 'light';
+  /** `xl` is the display size used in the numbers band. */
+  size?: 'md' | 'xl';
+  /** Digits kept while counting, so 7.4 does not count as 0, 1, … 7. */
+  decimals?: number;
 }) {
   const locale = useLocale() as Locale;
   const format = useCallback(
-    (n: number) => formatNumber(Math.round(n), locale),
-    [locale],
+    (n: number) => formatNumber(Number(n.toFixed(decimals)), locale),
+    [locale, decimals],
   );
   const ref = useCountUp<HTMLSpanElement>(value, format);
 
@@ -35,13 +41,14 @@ export function Stat({
     <div className={cn('flex flex-col gap-1', className)}>
       <p
         className={cn(
-          'font-display text-3xl font-bold tabular sm:text-4xl',
+          'font-display font-bold tabular',
+          size === 'xl' ? 'text-[clamp(2.5rem,4.6vw,4.5rem)] leading-none tracking-[-0.04em]' : 'text-3xl sm:text-4xl',
           tone === 'light' ? 'text-ground-50' : 'text-heading',
         )}
       >
         <span ref={ref}>{formatNumber(value, locale)}</span>
         {suffix ? (
-          <span className={cn('ms-0.5 text-xl', tone === 'light' ? 'text-aqua-300' : 'text-aqua-500')}>
+          <span className={cn('ms-1', size === 'xl' ? 'text-lg tracking-normal sm:text-xl' : 'text-xl', tone === 'light' ? 'text-aqua-300' : 'text-aqua-500')}>
             {suffix}
           </span>
         ) : null}

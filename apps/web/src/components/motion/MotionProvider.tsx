@@ -52,13 +52,28 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
     gsap.ticker.add(onTick);
     gsap.ticker.lagSmoothing(0);
 
-    // Fonts and hero media change layout after first paint; without this the
-    // pinned sections end up measuring the wrong heights.
+    // Fonts, split headlines and late layout change the page height after the
+    // triggers were measured; without a refresh every scroll-linked effect
+    // fires hundreds of pixels early. Watching the body's height catches all
+    // of them, debounced so a burst of changes costs one refresh.
     const refresh = () => ScrollTrigger.refresh();
     document.fonts?.ready.then(refresh).catch(() => {});
     window.addEventListener('load', refresh);
 
+    let lastHeight = document.body.scrollHeight;
+    let timer = 0;
+    const observer = new ResizeObserver(() => {
+      const height = document.body.scrollHeight;
+      if (Math.abs(height - lastHeight) < 2) return;
+      lastHeight = height;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(refresh, 150);
+    });
+    observer.observe(document.body);
+
     return () => {
+      observer.disconnect();
+      window.clearTimeout(timer);
       window.removeEventListener('load', refresh);
       gsap.ticker.remove(onTick);
       gsap.ticker.lagSmoothing(500, 33);

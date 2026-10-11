@@ -2,9 +2,11 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { Hero } from '@/components/hero/Hero';
-import { SourceTeaser } from '@/components/home/SourceTeaser';
-import { ProductRail } from '@/components/products/ProductRail';
-import { QualityTeaser } from '@/components/home/QualityTeaser';
+import { Marquee } from '@/components/home/Marquee';
+import { Statement } from '@/components/home/Statement';
+import { ProductShowcase } from '@/components/products/ProductShowcase';
+import { SourceBand } from '@/components/home/SourceBand';
+import { QualityBento } from '@/components/home/QualityBento';
 import { ContactCta } from '@/components/home/ContactCta';
 
 import { getProducts, getSourceProfile } from '@/services/content';
@@ -41,6 +43,7 @@ export default async function HomePage({ params }: Props) {
 
   const t = await getTranslations({ locale, namespace: 'meta' });
   const facts = await getTranslations({ locale, namespace: 'source.facts' });
+  const home = await getTranslations({ locale, namespace: 'home' });
 
   // Three measured facts, carried straight into the hero. A visitor should be
   // able to judge the water before scrolling once.
@@ -55,16 +58,19 @@ export default async function HomePage({ params }: Props) {
 
   return (
     <>
-      {/* Five sections, roughly five screens: the claim, the range, the source,
-          the evidence, the ask. Anything that did not earn its screen height is
-          on its own page instead. */}
-      <Hero backdrop="spring" scene highlights={highlights} />
+      {/* Deep, light, deep, light: the immersive opening, the idea, the range,
+          the evidence in numbers, the commitments, the ask. */}
+      <Hero highlights={highlights} />
 
-      <ProductRail products={products.data} />
+      <Marquee locale={locale} facts={highlights.map((fact) => `${fact.label} ${fact.value}`)} />
 
-      <SourceTeaser locale={locale} profile={source.data} seeded={source.seeded} />
+      <Statement eyebrow={home('statement.eyebrow')} text={home('statement.text')} />
 
-      <QualityTeaser locale={locale} />
+      <ProductShowcase products={products.data} />
+
+      <SourceBand locale={locale} profile={source.data} seeded={source.seeded} />
+
+      <QualityBento locale={locale} />
 
       <ContactCta locale={locale} />
 

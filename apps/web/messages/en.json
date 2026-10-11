@@ -161,6 +161,23 @@
       "body": "Distribution, private label or an export enquiry — our commercial team answers within two working days.",
       "primary": "Contact us",
       "secondary": "Export enquiries"
+    },
+    "statement": {
+      "eyebrow": "Our philosophy",
+      "text": "Every drop of VitaQueen began as snow on the peaks, spent decades filtering through limestone, and reaches the bottle exactly as the mountain made it — nothing added, nothing taken away."
+    },
+    "marquee": {
+      "a": "Natural mineral water",
+      "b": "Bottled at source",
+      "c": "Protected catchment",
+      "d": "Every batch laboratory-tested"
+    },
+    "numbers": {
+      "eyebrow": "By the numbers",
+      "title": "A water you can measure"
+    },
+    "bento": {
+      "cta": "Everything about quality"
     }
   },
   "about": {

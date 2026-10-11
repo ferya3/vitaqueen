@@ -20,6 +20,11 @@ export const buttonVariants = cva(
         light: 'bg-white text-heading shadow-press hover:bg-ground-50',
         outline: 'border border-ink-200 bg-white text-ink-800 hover:border-aqua-400 hover:text-aqua-800',
         destructive: 'bg-red-600 text-white hover:bg-red-700',
+        // For dark, immersive grounds: a thin frosted outline that lets the
+        // depth show through.
+        glass: 'border border-white/20 bg-white/[0.06] text-white backdrop-blur-md hover:border-white/40 hover:bg-white/12',
+        // The primary fill, brighter, for use on the abyss.
+        bright: 'bg-aqua-300 text-abyss-950 shadow-glow hover:bg-aqua-200 active:translate-y-px',
       },
       size: {
         sm: 'h-9 px-4 text-sm',

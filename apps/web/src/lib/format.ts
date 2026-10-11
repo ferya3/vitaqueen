@@ -25,10 +25,24 @@ export function formatDate(value: string | Date, locale: Locale) {
   }).format(date);
 }
 
-/** `330` -> `330 ml`, `1500` -> `1.5 L`. Kept in one place so labels agree. */
+/**
+ * `330` -> `330 ml`, `1500` -> `1.5 L`. Kept in one place so labels agree.
+ *
+ * Units in the reader's script. A Latin "ml" after Persian or Arabic digits is
+ * reordered by the bidi algorithm and reads "ml ۵۰۰" — the unit has to be in
+ * the same script as the number for the line to read the right way round.
+ */
+const VOLUME_UNITS: Record<Locale, { ml: string; l: string }> = {
+  fa: { ml: 'میلی‌لیتر', l: 'لیتر' },
+  ar: { ml: 'مل', l: 'لتر' },
+  ru: { ml: 'мл', l: 'л' },
+  en: { ml: 'ml', l: 'L' },
+};
+
 export function formatVolume(millilitres: number, locale: Locale) {
+  const units = VOLUME_UNITS[locale] ?? VOLUME_UNITS.en;
   if (millilitres >= 1000) {
-    return `${formatNumber(millilitres / 1000, locale)} L`;
+    return `${formatNumber(millilitres / 1000, locale)} ${units.l}`;
   }
-  return `${formatNumber(millilitres, locale)} ml`;
+  return `${formatNumber(millilitres, locale)} ${units.ml}`;
 }

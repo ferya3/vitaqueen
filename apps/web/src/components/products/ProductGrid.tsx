@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { BottleGlyph } from './BottleGlyph';
+import { BottleArt } from './BottleArt';
 import { Reveal, RevealItem } from '@/components/motion/Reveal';
 import { TiltCard } from '@/components/motion/TiltCard';
 import { ArrowIcon } from '@/components/ui/Icons';
@@ -40,10 +40,7 @@ export function ProductGrid({ products }: { products: Product[] }) {
                     className="h-full w-auto object-contain transition-transform duration-(--duration-slow) ease-(--ease-water) group-hover:-translate-y-2"
                   />
                 ) : (
-                  <BottleGlyph
-                    volumeMl={product.volumeMl}
-                    className="transition-transform duration-(--duration-slow) ease-(--ease-water) group-hover:-translate-y-2"
-                  />
+                  <BottleArt volumeMl={product.volumeMl} tone="light" idSuffix="grid" className="transition-transform duration-(--duration-slow) ease-(--ease-water) group-hover:-translate-y-2" />
                 )}
               </div>
               <p className="text-2xs font-semibold uppercase tracking-[0.16em] text-aqua-600">

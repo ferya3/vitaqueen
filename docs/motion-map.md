@@ -32,30 +32,31 @@ support, Save-Data, reduced-motion — and publishes the result on
 | `medium` | Video backgrounds, full timelines, smooth scroll | Everything in between, and every touch device |
 | `low` | Static art, CSS transitions only, native scrolling | ≤ 2 GB or ≤ 2 cores, Save-Data, 2G, or reduced motion |
 
-The ladder in `MediaLayer` is **3D → video → still**, and only one rung is ever
-mounted. A weak laptop is never asked to composite a WebGL canvas behind a video
-behind an image.
+On `high` the home hero mounts a WebGL field of drifting droplets behind the
+illustrated bottle; every other tier gets the same hero without it. On `low` the
+CSS caustics, light rays and bubbles are switched off as well.
 
 ## The catalogue
 
 ### Home
 
-The home page is five sections — hero, products, source, quality, contact — so
-the motion budget is spent on five moments rather than eleven.
+Deep, light, deep, light, deep: each section owns one motion idea.
 
 | Section | Mechanism | Hook | Degrades to |
 | --- | --- | --- | --- |
-| Hero entrance | Word-split headline, staggered `yPercent`, subject scale-in | `useHeroTimeline` | Everything visible, no transform |
-| Hero pointer parallax | `gsap.quickSetter` on the ticker; media −14 px, subject +26 px | `useHeroTimeline` + `usePointer` | Skipped on coarse pointers |
-| Hero scroll-out | Media drifts −6% once the block's bottom enters the viewport | `useHeroTimeline` | Static |
-| Products | Staggered grid reveal, card lift on hover | `Reveal` | CSS transition on `data-revealed` |
-| Source | Mineral bars grow on width transition; animated SVG route diagram | `MineralChart`, `SourceMap` | Bars render at final width |
-| Quality | Staggered pillar reveal | `Reveal` | Visible |
-| Contact | Static panel over a generated backdrop | — | Static |
+| Hero entrance | Word-split headline, staggered `yPercent`, bottle scale-in | `useHeroTimeline` | Everything visible, no transform |
+| Hero ambience | Caustics, light rays, bubbles, ripples under the bottle, floating bottle; WebGL droplets on `high` | CSS, `BottleScene` | Static deep gradient |
+| Hero pointer parallax | `gsap.quickSetter` on the ticker; media −14 px, bottle +26 px | `useHeroTimeline` + `usePointer` | Skipped on coarse pointers |
+| Ticker | Two copies of the row, CSS translate by −50% (RTL +50%), paused on hover | `Marquee` | Static row |
+| Statement | One sentence at display size; each word scrubbed from 14% to full opacity across the scroll | `Statement` (`useGSAP` + ScrollTrigger) | Full-strength sentence |
+| Products | Pinned section, vertical scroll drives the row sideways (scrubbed) on `lg` + fine pointer; swipeable snap row elsewhere | `ProductShowcase` (`gsap.matchMedia`) | Native horizontal scroll |
+| Numbers | Display-size figures count up when they enter (Framer Motion `animate`); mineral bars grow | `Stat`, `MineralChart` | Final values, server-rendered |
+| Bento | Staggered reveal; each tile lights up under the cursor (`--mx`/`--my`) | `Reveal`, `Spotlight` | Static tiles |
+| Contact | Round link floods with aqua from the centre on hover | CSS | Static |
 
-The hero is no longer a full-viewport band pinned to the top of the document,
-so its scroll-out trigger starts at `bottom bottom` rather than `top top` — with
-the old trigger the copy began fading the instant the page loaded.
+ScrollTrigger positions are recalculated whenever the page height changes
+(a `ResizeObserver` in `MotionProvider`), so late fonts and split headlines
+never leave a scroll effect firing hundreds of pixels early.
 
 ### Inner pages
 

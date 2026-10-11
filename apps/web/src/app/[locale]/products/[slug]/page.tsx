@@ -5,7 +5,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { PageHero } from '@/components/hero/PageHero';
 import { Section } from '@/components/ui/Section';
 import { Eyebrow } from '@/components/ui/Eyebrow';
-import { BottleGlyph } from '@/components/products/BottleGlyph';
+import { BottleArt } from '@/components/products/BottleArt';
 import { ProductGrid } from '@/components/products/ProductGrid';
 import { MineralChart } from '@/components/source/MineralChart';
 import { SeedNotice } from '@/components/ui/SeedNotice';
@@ -94,7 +94,7 @@ export default async function ProductPage({ params }: Props) {
                   className="h-full w-auto object-contain"
                 />
               ) : (
-                <BottleGlyph volumeMl={product.data.volumeMl} />
+                <BottleArt volumeMl={product.data.volumeMl} tone="light" idSuffix="detail" />
               )}
             </div>
           </div>

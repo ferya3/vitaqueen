@@ -14,7 +14,7 @@ const labels: Record<Locale, string> = {
   ru: 'Русский',
 };
 
-export function LocaleSwitcher({ label }: { label: string }) {
+export function LocaleSwitcher({ label, tone = 'default' }: { label: string; tone?: 'default' | 'light' }) {
   const active = useLocale() as Locale;
   const pathname = usePathname();
   const router = useRouter();
@@ -40,7 +40,10 @@ export function LocaleSwitcher({ label }: { label: string }) {
         aria-label={label}
         disabled={pending}
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-pill px-3 py-2 text-sm font-medium text-ink-600 transition-colors hover:bg-ink-900/5 hover:text-heading',
+          'inline-flex items-center gap-1.5 rounded-pill px-3 py-2 text-sm font-medium transition-colors',
+          tone === 'light'
+            ? 'text-white/80 hover:bg-white/10 hover:text-white'
+            : 'text-ink-600 hover:bg-ink-900/5 hover:text-heading',
           pending && 'opacity-60',
         )}
       >

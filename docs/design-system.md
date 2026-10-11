@@ -1,4 +1,4 @@
-# Design system — "Glass"
+# Design system — "Glass & Depth"
 
 Every value below is declared once, in `apps/web/src/app/globals.css` under
 `@theme`. Components consume tokens (`text-ink-900`, `ease-water`, `section-y`,
@@ -12,10 +12,24 @@ and generic. What replaced it inverts almost every one of those decisions.
 
 ## The idea
 
-The page is a pale aurora — three fixed radial gradients on the `<body>` — and
-everything on it is a translucent panel floating over that gradient. There is
-no second colour scheme: the header, the hero, the cards and the footer are all
-the same light material, so nothing has to switch theme as you scroll.
+Two materials, alternating.
+
+- **Depth** opens and closes every page: the home hero, every inner-page hero,
+  the numbers band and the footer sit on the `abyss` ground — teal-black
+  gradients with drifting caustics, shafts of light, a few rising bubbles and
+  film grain (`DeepBackdrop`, `.abyss`, `.grain`). Type there is white and set
+  very large.
+- **Glass** carries the reading in between: the pale aurora on `<body>` with
+  translucent and white panels over it.
+
+The rhythm down the home page is deep, light, deep, light, deep. A page that is
+pale from top to bottom reads as bland however good the details are; a page
+that is dark throughout reads as heavy. The switch is what makes each feel
+deliberate. Every page starting dark also gives the header a single rule: white
+type over the hero, a light glass pill once scrolled.
+
+All of the depth is CSS — no photograph, video or extra request — and every
+animated part of it stops under reduced motion and on the low device tier.
 
 ## Colour
 
@@ -24,6 +38,7 @@ the same light material, so nothing has to switch theme as you scroll.
 | `ground` | The aurora itself: `#f2fafd` and its neighbours. Never a flat grey. | The ground |
 | `aqua` | The brand voice. Primary buttons, active nav, mineral bars, accents. Turquoise, not navy blue. | Sparing but loud |
 | `ink` | Deep teal-slate for type. `ink-900` (`#0f2a3a`) is as dark as the system goes. | All the text |
+| `abyss` | The deep end: `#03131c` to `#0f4157`. Heroes, the numbers band, the footer, the mobile menu. Teal-black, never navy. | Bookends |
 | `mint` | The quiet second accent: "verified", sustainability, success states. | Rare |
 
 Rules that carry the look:
@@ -120,9 +135,9 @@ Primitives in `components/ui`:
 | `Eyebrow` | A tinted pill, not a hairline rule — on a gradient ground a thin rule reads as an artefact. |
 | `DataTable` | Below `sm` each row becomes its own block (heading + label/value pairs); from `sm` up, a real table inside a glass panel. A six-column analysis sheet must never make the page scroll sideways. |
 | `MineralBar` | Bars scale against the largest value in the set, not an absolute maximum — otherwise sodium at 8 mg/L is an invisible sliver and the chart says nothing. |
-| `MediaLayer` | The 3D → video → still ladder. See the motion map. |
+| `DeepBackdrop` | The abyss layers: light rays, two caustic lattices, a fixed bubble field and a horizon fade. Pure CSS. |
 | `WaterBackdrop` | Generated background art: light gradients plus a wave field, in five variants. |
-| `BottleGlyph` | Vector product stand-in whose silhouette derives from the actual volume, so the range reads as a range. Also the hero's still, tagged `tier-poster` so it disappears the moment the WebGL bottle is allowed to mount. |
+| `BottleArt` | The product, drawn: clear glass, lit water, wrap-around label, ribbed cap, specular stripes and a contact shadow. Wider and squatter for bigger formats, so the range reads as a range. Stands in for photography and costs no request. |
 | `SeedNotice` | Marks figures as sample data. Never suppress it to make a screenshot look finished. |
 
 ## Page structure
